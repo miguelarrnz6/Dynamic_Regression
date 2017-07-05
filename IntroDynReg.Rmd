@@ -1,0 +1,480 @@
+---
+title: "Introduction to Dynamic Regression"
+author: "Miguel A. Arranz"
+date: '`r Sys.Date()`'
+output:
+  tint::tintPdf:
+    citation_package: natbib
+    latex_engine: pdflatex
+  tint::tintHtml:
+    self_contained: yes
+subtitle: Dynamic Modeling, Inference, and Forecasting
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+library(tint)
+library(tufte)
+library(bookdown)
+# invalidate cache when the package version changes
+knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tint'))
+options(htmltools.dir.version = FALSE)
+```
+
+# Linear Dynamic Equations
+
+This section describes the forms of linear dynamic single equation models that occur
+frequently in time-series econometrics
+
+## Stationarity and Non-Stationarity
+
+A variable $y_t$ is said to be weakly stationary if its first two moments are finite and
+constant over time, and its correlogram $\{\rho_s\}$ is finite and independent of $t$ for all $s$. We
+denote the expected value of $y_t$ by $E[y_t]$ and its second moment by $E[y^2_t]$, so these must
+both be constant as a necessary condition to satisfy stationarity; otherwise the process
+is non-stationary.
+
+There are many reasons why economics variables (like inflation, income etc.) may
+not be stationary (technical progress; policy regime changes etc.), which is bound to
+make it difficult to model their behaviour, since their means and variances may change
+from period to period. Thus, much econometric theory has assumed stationarity. If
+that is not a realistic characterization of economic data, then any resulting empirical
+analyses must be hazardous.
+
+Consequently, recent effort has been devoted to developing models applicable to
+non-stationary data: a recent discussion is Hendry and Juselius (2000). The analysis
+below allows for some forms of non-stationarity, which we believe can be treated
+in an intermediate-level course. Notice that a future lesson will
+concern one pernicious consequence of analyzing non-stationary processes as if they
+were stationary (spurious regression).
+
+## Lag Polynomials
+
+The analysis of dynamic equations follows from the use of a lag operator (denoted by $L$) such that
+$L^r x_t = x_{t-r}$ for anyy variable $x_t$. Notice that a difference, such as
+$\Delta x_t = x_t - x_{t-1}$, becomes $(1-L) x_t$.
+
+More generally, scalar polynomials in $L$ are denoted by:
+$$
+d(L) = d_m L^m +d_{m+1} L^{m+1} + \ldots + d_n L^n = \sum_{r=m}^n d_r L^r,
+$$
+where $d_m = 1$ is often imposed to normalize the polynomial. Usually, $m = 0$ and
+$n \geq 1$, and we assume that in the following, with $d_0 = 1$. The sum of the coefficients
+is important and is denoted by $d(1)$:
+$$
+d(1) = \Biggl( \sum_{r=0}^n d_r L^r  \Biggr)_{| L=1} = \sum_{r=0}^n d_r
+$$
+
+Using the sum, the polynomial can be rewritten as (using $n = 2$ to illustrate, and
+minimize the algebra):
+\begin{align*}
+d_0 + d_1 L + d_2 L^2 & = (d_0 + d_1 + d_2) - d_1(1-L) - d_2 (1-L)(1+L) \\
+  & d(1) -d^\star (L) (1-L),
+\end{align*}
+where
+$$ d^\star (L) = (d_1 + d_2) + d_2 L$$.
+In general, we can alaways write
+$$ d(L) = d(1) - d^\star (L) \Delta$$
+which will prove impoortant below.
+
+Returning to dynamic models, the impact of $d(L)$ on $x_t$ is given by:
+$$ d(L) x_t = \sum_{r=0}^n d_r L^r x_t = \sum_{r=0}^n d_r x_{t-r}.$$
+
+Lag polynomials like $d(L)$ define autoregressions when the equation is of the form
+$$ a(L) y_t = \sum_{r=0}^n a_r y{t-r} = \varepsilon_t$$
+and $\varepsilon_t$ is a serially-uncorrelated error (that is, white noise), often taken to be normal and
+independently distributed, with mean zero and constant variance:
+$$ \varepsilon_t \sim iid \: N(0, \sigma^2_{\varepsilon}).$$
+
+Alternatively, $d(L)$ defines a finite distributed lag when the model has the form:
+$$ y_t = b(L) x_t + \varepsilon_t = \sum_{r=0}^p b_r x_{t-r} + \varepsilon_t.$$
+The autoregressive-distributed lag (ADL) class is given by:
+\begin{align*}
+ c(L) y_t & = b(L) x_t + \varepsilon_t \\
+\sum_{j=0}^n c_j y_{t-j} & = \sum_{r=0}^p b_r x_{t-r} + \varepsilon_t.
+ \end{align*}
+ Many different xs may be used conjointly if required in models like above, in which
+ case the equation is written in a more convenient notation as:
+ $$ b_0(L) y_t = \sum_{i=1}^k b_i(L) x_{it} + \varepsilon_t$$
+ when there are $k$ explanatory variables $(x_{1,t}, x_{2,t}, \ldots , x_{k,t})$.
+Of course, each $x_{i,t}$ will also exhibit some autoregressive behaviour in general.
+
+## Roots of Lag Polynomials
+
+Many important properties of the dynamic model are determined by the polynomials
+$a(L)$, $b(L)$ and $c(L)$. First, any polynomial of degree $n$ has n (real or complex)
+roots $\lambda_i$, and can be expressed as the product of its roots:
+$$
+d(L) = \sum_{r=0}^n d_r L^r = \prod_{i=1}^n (1 - \lambda_i L).
+$$
+An important consequence is that
+$$
+d(1) = \prod_{i=1}^n (1 - \lambda_i).
+$$
+The values of the roots determine the dynamic properties of the variables. For example,
+the model is a stable dynamic process if all the roots $\lambda_i$ of the polynomial $c(L)$
+satisfy $|\lambda_i| < 1$ (R will calculate these roots). Equally, the process  is
+weakly stationary when all $|\lambda| < 1$ for $a(L)$. However, if a root of $a (L)$ is
+equal to unity, then from  $a(1) = 0$ so $a(L) = a^\star(L) \Delta$, so that:
+$$
+a(L) y_t = a^\star (L) \Delta y_t = \varepsilon_t,
+$$
+and the first difference of yt is weakly stationary. Thus, $y_t$ itself is non-stationary, and
+is said to be integrated of order 1, denoted $I(1)$, as it needs to be differenced to remove
+the unit root and become weakly stationary. We now have one case where a process is
+non-stationary, but can be reduced to stationarity (here, by differencing).
+
+## Long-run Solutions
+
+Another important property, most relevant for $c(L)$, is when $c(1)\neq 0$, in
+which case it is possible to solve for the long-run outcome of the process
+$$
+c(L) y_t - b(L) x_t = \varepsilon_t,
+$$
+so that
+$$
+c(1) y_t - b(1) x_t = c^\star (L) \Delta y_t - b^\star (L) \Delta x_t + \varepsilon_t.
+$$
+When both $\Delta y_t$ and $\Delta x_t$ are stationary, then $E[\Delta y_t] = \mu_y$
+and $E[\Delta x_t] = \mu_x$. Thus, if we take expectations of both sides
+$$
+E[c(1) y_t - b(1) x_t] =
+E[c^\star (L) \Delta y_t - b^\star (L) \Delta x_t + \varepsilon_t] =
+c^\star(1) \mu_y - b^\star(1) \mu_x = K_0,
+$$
+or
+$$
+E \Biggl[ y_t - \dfrac{b(1)}{c(1)} x_t - K_0 \Biggr] =
+E[y_t - K_1 x_t - K_0] = 0.
+$$
+the this is the long-run solution of the system. Clearly it requires that
+$c(1) \neq 0$ in order to be well defined, and $b(1) \neq 0$ to be non-trivial. In particular,
+when $(y_t, x_t)$ are jointly weakly stationary, then we can also write it as:
+$$
+E[y_t] = K_0 + K_1 E[x_t].
+$$
+
+If $c(1) \neq 0$ and $b(1) \neq 0$ when $y_t$ and $x_t$ are both $I(1)$, yet
+$\{ \}y_t - K_1 x_t -  K_0$ is $I(0)$, then $y_t$ and $x_t$ are said to be **cointegrated**.
+Thus, cointegration is the
+property that linear combinations of variables also remove the unit roots.
+The long-run solution above remains valid in the cointegrated case.
+Empirical evidence suggests that many economic time
+series are better regarded as integrated process than as stationary.
+
+## Common Factors
+
+Thirdly, the ADL process has common factors (denoted COMFAC) if some of the
+roots of $c(L)$ coincide with roots of $b(L)$. For example, when
+$$
+c(L) = (1 - \rho L) c^\star (L) = \rho(L) c^\star (L),
+$$
+and at the same time
+$$
+b(L) = (1 - \rho L) b^\star (L) = \rho(L) b^\star (L),
+$$
+then we can write the process as
+$$
+\rho(L) c^\star (L) y_t = \rho(L) b^\star (L) x_t + \varepsilon_t,
+$$
+or, dividing both sides by $\rho(L) = (1 - \rho (L))$:
+$$
+c^\star (L) y_t = b^\star (L) x_t + u_t \qquad
+u_t = \rho u_{t-1} + \varepsilon_t.
+$$
+The error $\{u_t\}$ is, therefore, an autoregressive process, and is
+generated from the common
+factor in the original lag polynomials $c(L)$ and $b(L)$.
+
+# A typology of simple dynamic models
+
+Hendry, Pagan, and Sargan (1984) provide a detailed analysis of single equation models
+like the ADL above, and show that most of the widely-used empirical models are special cases of
+ADL. There are nine distinct model types embedded in ADL, a point most easily seen
+by considering the special case of $k = n = 1$ and $m = 0$, so that all of the polynomials
+are first order, and only one $x$ variable is involved:
+\begin{equation}
+y_t = \alpha_1 y_{t-1} + \beta_0 x_t + \beta_1 x_{t-1} + \varepsilon_t,
+\end{equation}
+where $\varepsilon_t \sim iid N(0, \sigma^2_\varepsilon)$.
+
+All nine of the following models are obtainable by further restrictions on this extremely
+simple case:
+
+1. static relationship;
+2. autoregressive process;
+3. leading indicator;
+4. growth-rate model;
+5. distributed lag;
+6. partial adjustment;
+7. autoregressive-error model (COMFAC);
+8. equilibrium-correction mechanism (EqCM);
+9. dead-start model.
+
+Equation (1) is a specialization of the special case of a linear, single-equation dynamic
+model, with the apparently restrictive assumption that $\{ \varepsilon_t\}$
+is a white-noise process.
+Yet most widely-used model types are schematically represented in (1), and
+the typology highlights their distinct characteristics, strengths and weaknesses.
+
+To clarify the approach, we consider the nine cases in turn, deriving each via restrictions
+on the parameter vector:
+$$
+\mathbf{\theta}^\prime = (\alpha_1, \beta_0, \beta_1)
+$$
+of (1), noting that an intercept and an error variance can be included without altering
+the implications in all models, and are omitted for simplicity of exposition. Four of
+the cases impose two restrictions on $\theta$ and five impose one, and these will be referred
+to respectively as one and two parameter models since $\sigma^2$ is common to all stochastic
+models. Table 1 lists the outcomes.
+
+|     Type of Model      |         $\mathbf{\theta}^\prime$         |              Restrictions on (1)              |                    |
+| ---------------------- | ---------------------------------------- | --------------------------------------------- | ------------------ |
+| static regression      | $(0, \beta_0, 0)$                        | $\alpha_1 = \beta_1 = 0$                      | no dynamics        |
+| autoregressive process | $(\alpha_1, 0, 0)$                       | $\beta_0 = \beta_1 = 0$                       | np covariates      |
+| leading indicator      | $(0, 0, \beta_1)$                        | $\alpha_1 = \beta_0 = 0$                      | no contemporaneity |
+| growth rate            | $(1, \beta_0, -\beta_0)$                 | $\alpha_1 = 1, \; \beta_1 = - \beta_0$        | no levels          |
+| distributed lag        | $(0, \beta_0, \beta_1)$                  | $\alpha_1 = 0$                                | finite lags        |
+| partial adjustment     | $(\alpha_1, \beta_0, 0)$                 | $\beta_1 = 0$                                 | no lagged $x$      |
+| autoregressive error   | $(\alpha_1, \beta_0, -\alpha_1 \beta_0)$ | $\beta_1 = -\alpha_1 \beta_0$                 | one common factor  |
+| error correction       | $(\alpha_1, \beta_0, K)$                 | $K = \dfrac{\beta_0 + \beta_1}{1 - \alpha_1}$ | long-run response  |
+| dead-start             | $(\alpha_1, 0, \beta_1)$                 | $\beta_0 = 0$                                 | lagged variables   |
+
+Table: Model Typology based ADL(1,1).
+
+Three important issues must be clarified before proceeding: the status of $\{x_t\}$; the
+dependence of the model's properties on the data properties; and whether each model
+type is being treated as correctly specified or as an approximation to a more general
+DGP. These three problems arise in part because the analysis has not
+commenced from the most general system needed to characterize the observed data adequately,
+and in part because the DGP is unknown in practice, so we do not know which
+data properties to take as salient features in an analytical treatment (not to mention in
+empirical studies).
+
+For the present, we treat $\{x_t\}$ as if it were (weakly) exogenous for the parameters
+of interest in $\theta$ (see Engle, Hendry, and Richard, 1983). Heuristically,
+weak exogeneity ensures that we can take the conditioning variables as valid, and so
+analyze the conditional equation without loss of any relevant information about
+$\theta$, despite not also modelling the process determining xt: this would be false if the
+model of $x_t$ depended on $\theta$. When $x_t$ is weakly exogenous for $\theta$, then if
+any member of the typology is valid, so must be every less restricted, but *identifiable*,
+member. That statement has profound implications not only for the general methodology
+of modelling, but also for such major issues of current contention as the practice of
+'allowing for residual autocorrelation', the validity of analyzing over-identified simultaneous
+systems (the Sims critique: see Sims, 1980, and Hendry and Mizon, 1993), and
+the imposition of restrictions based on prior theory, including the Lucas critique (see
+Lucas, 1976, Favero and Hendry, 1992, and Ericsson and Irons, 1995).
+
+As noted earlier, $x_t$ is assumed to be $I(1)$, and for convenience, we take
+$\Delta x_t$ to
+be a stationary process. This determines the answer to the second issue; but since some
+economic time series seem to be $I(0)$ (e.g., unemployment), the case
+$x_t \sim I(0)$ remains
+relevant. If $x_t$ and $y_t$ are cointegrated,
+then $u_t = (y_t - K x_t) \sim I(0)$, but such a belief
+may be false, and the case $u_t \sim I(1)$ $\forall K$ must be noted.
+The typology treats each case
+in turn, as if it were the correct specification, but notes both the historical success of
+such an assumption, and the likely consequences when it is incorrect.
+
+## Static Regression
+
+Equations of the form
+$$
+y_t = b_0 x_t + u_t
+$$
+(with $b_0$ and $x_t$ vectors in general) have played a large role in many macro-econometric
+systems as erstwhile 'structural' equations (i.e., embodying the fundamental parameters
+of the behaviour of economic agents). In practice, futg has usually been highly
+autocorrelated (reminiscent of nonsense correlations - see Yule, 1926), so that conventional
+inference about b0 is invalid (see, for example, Granger and Newbold, 1974, and
+Phillips, 1986). However, static equations reappeared as part of a two-stage strategy
+for investigating cointegration, with the focus on testing whether or not
+$\{u_t\}$ was $I(1)$
+against the alternative that it was $I(0)$ (see Engle and Granger, 1987).
+Then, $b_0$ would
+be a direct estimator of $K$ in (12.9). Even so, the success of such an estimator in finite
+samples has been questioned (see Banerjee, Dolado, Hendry, and Smith, 1986), and is
+dependent on the mean lag between $y$ and $x$, noting that a static equation imposes that
+mean lag at zero. Alternatively, you may considfer the strategy of removing the
+autocorrelation in $\{u_t\}$ by fitting an autoregressive process.
+
+## Univariate autoregressive processes
+
+The equation
+$$
+y_t = \alpha_1 y_{t-1} + \varepsilon_t
+$$
+serves as our representative of univariate time-series models.
+If $y_t$ is $I(1)$, $\alpha_1 = 1$, inducing a random walk when $\varepsilon_t$
+is white noise. Autoregressive equations are widely used for ex ante forecasting, and have proved a powerful
+challenger to econometrics systems in that domain (see, for example, Nelson, 1972, and
+the vector analogues in Doan, Litterman, and Sims, 1984; see Clements and Hendry;
+Clements and Hendry, 1998, 1999, for an explanation based on other sources of nonstationarity
+than unit roots). In economics, the interdependence of economic decisions
+(for example, one person's income is another's expenditure) entails that univariate autoregressions
+must be derived, and hence are not autonomous processes - where an
+equation for $y_t$ is autonomous if changes in the process generating $x_t$ do not alter it.
+Here, the autoregression is obtained by eliminating, or marginalizing with respect to,
+xt. For example, let $x_t = x_{t-1} + \nu_t$ where $\nu_t \sim iid N(0, \sigma^2_t)$
+when in fact $\alpha_1 = 1$ and $\beta_1 = - \beta_0$, then
+$y_t = y_{t-1} + \varepsilon_t + \beta_0 \nu_t$ has a non-constant variance
+$\sigma^2_\varepsilon + \beta_0^2 \sigma^2_t$.
+Consequently, econometric models should both fit better than autoregressions
+(or else they are at least dynamically mis-specified), and should forecast better (or
+else the constancy of the econometric model must be suspect).
+
+That both these requirements are sometimes not satisfied is owing in part to the
+inappropriateness of some current empirical methodological practices.
+
+## Leading Indicators
+
+Models of the form
+$$
+y_t = c_1 x_{t-1} + v_t
+$$
+can be used in forecasting if $x$ leads $y$ with sufficient reliability (for example, orders
+arrive ahead of output). In the absence of a sound behavioural theory, however, $c_1$ need
+not be constant. If it is not, that will lead to poor forecasting, especially in periods
+of change when good forecasts are most needed. Moreover, there seems no good reason
+for excluding lagged $y's$, and if a general dynamic model is postulated, it can be
+treated as any other model.
+
+## Growth-rate models
+
+The evolutionary and trend-like behaviour of many economic time series led earlier
+investigators to recommend differencing data prior to statistical analysis. One example
+is Granger and Newbold (1977) although, as argued in Hendry and Anderson (1977),
+there are other transformations (such as ratios) which potentially could also remove
+trends. That leads on to the concept of cointegration discussed later.
+
+Growth-rate models have the form
+$$
+\Delta y_t = d_0 \Delta x_t + \eta_t
+$$
+Such models successfully avoid nonsense regressions problems in $I(1)$ data, and from
+the transformed dependent variable, a useful measure of goodness of fit can be calculated.
+Nevertheless, if the variance of $\Delta x_t$ is large relative to that of
+$\Delta y_t$, $d_0$ must be
+small even if $y_t$ and $x_t$ are cointegrated with $K = 1$
+(this is the permanent income issue
+in one guise: see Davidson, Hendry, Srba, and Yeo, 1978).
+Further, although $y_t = K x_t$
+implies $\Delta y_t = K \Delta x_t$, the converse is false in a stochastic
+world owing to integrating
+the error.
+
+Alternatively, there are no *a priori* grounds for excluding levels from economic
+relationships since initial disequilibria cannot be assumed to be irrelevant:
+that is, the
+time path of $\Delta y_t$ for a given sequence $\Delta x_t$
+may depend on the relationship between $y_0$ and $x_0$.
+Two further insights into the drawbacks of growth-rate models are discussed
+later.
+
+On the methodological level, a mistake sometimes committed in applied economics
+is to begin with a linear approximation to a steady-state theory of the form:
+$y_t =f(x_t)$, fit a static model thereto, discover severe residual
+autocorrelation and 'correct'
+that, either by differencing, or by using 'Cochrane-Orcutt' (but see their 1949 article,
+Cochrane and Orcutt, 1949, which does not recommend that procedure, as noted by
+Gilbert, 1989) but finding an autoregressive parameter near unity. While the goodness
+of fit may not be greatly worsened by imposing differencing, dynamic responses can be
+substantially distorted, and ignoring long-run feedbacks may distort policy strategies.
+
+## Distributed lags
+
+Although using only one lag makes the resulting model highly schematic, but nevertheless
+the equation
+$$
+y_t = f_0 x_t + f_1 x_{t-1} + \xi_t,
+$$
+is representative of the class of finite distributed lags. Such models remain open to
+the objections noted in the section devoted tp static models above,
+are highly dependent on whether $x_t$ is weakly,
+or strongly, exogenous unless $\xi_t$ is white noise (which in practice it rarely is in this
+class), and tend to suffer from collinearity owing to the inappropriate parametrization
+of including many levels of the regressor. Imposing so-called *a priori*
+restrictions on the lag coefficients to reduce the profligate parametrization has little to
+recommend it, although such restrictions are at least potentially testable. It is hard to
+see any theoretical grounds for excluding lagged ys, given that they are another way
+of representing a distributed lag relationship; and considerable
+dangers exist in arbitrarily removing any residual autocorrelation from $\xi_t$.
+
+## Partial adjustment
+
+The equation
+$$
+y_t = g_0 x_t + g_1 y_{t-1} + \zeta_t
+$$
+occurs regularly in empirical macro-economics, and can be derived from assuming a
+long-run desired target of the form $y_t = K x_t$ subject to quadratic adjustment costs
+(see, for example, Eisner and Strotz, 1963, and Nickell, 1985). While such a model
+type seems reasonable in principle, it does not entail that the $y$ and $x$ variables which
+agents use in their decision rules are precisely the levels analyzed by the economist.
+For example, agents may use the (log of the) consumption-income ratio as
+their $y_t$, and
+the growth rate of income as their $x_t$, rather than the levels of both.
+The resulting
+econometric specification, however, is wholly different despite the common element of
+partial adjustment.
+
+Even when $y_t$ and $x_t$ are cointegrated in levels, the partial adjustment model has
+little to recommend it unless it happens to coincide with the DGP.
+
+## Autoregressive errors or COMFAC models
+
+As noted above, some of the roots of $b(L)$ and $c(L)$ may be equal, allowing
+cancellation. IN the case of equation (1), we can write the equation as
+$$
+(1 - \alpha_1 L) y_t = \beta_0 (1 + \dfrac{\beta_1}{\beta_0} L) x_t + \varepsilon_t.
+$$
+Thus, if and only if $\alpha_1 = -\beta_1/\beta_0$ or $\beta_1 + \alpha_1 \beta_0$,
+then on dividing both sides by $(1- \alpha_1 L)$, the equation can be rewritten as
+$$
+y_t = \beta_0 x_t + \dfrac{\varepsilon_t}{1 - \alpha_1 L},
+$$
+or letting $\rho=\alpha_1$,
+\begin{equation}
+y_t = \beta_0 x_t + u_t, \qquad u_t = \rho u_{t-1} + \varepsilon_t
+\end{equation}
+yielding a static model with an autoregressive error. The term
+$(1 - \alpha_1 L)$ is a factor
+(in this simple case, the only factor) of $a(L)$ and similarly
+$(1 + (\beta_1/\beta_0))$ is a factor
+of $b(L)$, so that when these are equal there is a factor in common in
+$a(L)$ and $b(L)$
+(leading to the name COMFAC). The converse that autoregressive errors
+induce a common factor is
+obvious, so there is an isomorphism between autoregressive errors and common factors
+in the lag polynomials: if you believe one, you must believe the other.
+Since (2)
+imposes restrictions on (1), these are testable, and rejection entails discarding the
+supposed reduction to (2) (see Hendry and Mizon, 1978). Thus, the ADL class
+includes all models with autoregressive errors.
+
+Two points of importance from (2) are that: (a) it imposes a zero mean lag
+irrespective of the actual lag responses, since the short-run and long-run responses are
+forced to be equal by the choice of model type; and (b) the growth-rate model
+can be reinterpreted as imposing a common factor then setting $\rho$ to unity. We concur
+with the advice in the title of the paper by Mizon (1995).
+
+**A simple message for autocorrelation correctors: Don't**
+
+## Dead-start models
+
+The main consideration arising for this type of model is its exclusion of contemporaneous
+information. This could be because
+$$
+y_t = \alpha_1 y_{t-1} + \beta_1 x_{t-1} + \varepsilon_t
+$$
+is structural, and hence is a partial adjustment type. Alternatively, it could be a
+derived form, from which $x_t$ has been eliminated, in which case it is unlikely to
+be autonomous, and its parameters would be susceptible to alter with changes in the
+behaviour of the $x_t$ process. In this second case, the coefficients are not interpretable
+since they are (unknown) functions of the correlations between
+$x_t$ and $(y_{t-1}, x_{t-1})$.
+
+Care is obviously required in selecting an appropriate type of model to characterize
+both a given theory and the associated data; some of the methodological considerations
+discussed below help clarify that choice.
