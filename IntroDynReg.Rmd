@@ -461,6 +461,22 @@ with the advice in the title of the paper by Mizon (1995).
 
 **A simple message for autocorrelation correctors: Don't**
 
+## Equlibrium-correction mechanisms
+
+The issue of appropriate reparametrizations of $\mathbf{\theta}$ has arisen on
+several occasions above, and many alternatives are conceivable.
+One natural choice follows from rearranging the ADL(1,1) model (1) as:
+\begin{align*}
+\Delta y_t & = (\alpha_1 - 1) y_{t-1} + \beta_0 \Delta x_t +
+(\beta_1 + \beta_0) x_{t-1} + \varepsilon_t \\
+  & = \beta_0 \Delta x_t + (\alpha_1 - 1) (y_{t-1} - K x_{t-1}) + \varepsilon_t,
+\end{align*}
+where
+$$
+K = \dfrac{\beta_0 + \beta_1}{1 - \alpha_1}
+$$
+is the log-run response when $\alpha_1 \neq 1$.
+
 ## Dead-start models
 
 The main consideration arising for this type of model is its exclusion of contemporaneous
@@ -478,3 +494,56 @@ $x_t$ and $(y_{t-1}, x_{t-1})$.
 Care is obviously required in selecting an appropriate type of model to characterize
 both a given theory and the associated data; some of the methodological considerations
 discussed below help clarify that choice.
+
+
+# Interpretation. Dynamic Multipliers
+
+Assuming that your model is the usual ADL(1,1) we have been considering so far
+\begin{equation}
+y_t = \delta + \alpha_1 y_{t-1} + \beta_0 x_t + \beta_1 x_{t-1} + \varepsilon_t
+\end{equation}
+The interesting element in this dynamic model is that it describes the dynamic
+effects of a change in $x$ upon current and future values of $y$.
+Taking partial derivatives, we can derive that the immediate response is given by
+$$
+\partial{y_t}{x_t} = \beta_0.
+$$
+Sometimes this is referred to as the **impact multiplier**.
+An increase in $x$  with one unit has an immediate impact on $y$ of $\beta_0$  units.
+The effect after one period is
+$$
+\partial{y_{t+1}}{x_t} = \alpha_1 \partial{y_t}{x_t} + \beta_1 = alpha_1 \beta_0 + \beta_1
+$$
+You can obtain this from
+$$
+y_{t+1} = \alpha_1 y_t + \beta_0 x_{t+1} + \beta_1 x_t + \varepsilon_{t+1}.
+$$
+Notice that for $t+2$ you have
+$$
+y_{t+2} = \alpha_1 y_{t+1} + \beta_0 x_{t+2} + \beta_1 x_{t+1} + \varepsilon_{t+2}
+$$
+and thus
+$$
+\partial{y_{t+2}}{x_t} = \alpha_1 \partial{y_{t+1}}{x_t} = \alpha_1 (alpha_1 \beta_0 + \beta_1)
+$$
+and so on. This shows that, after the first period, the effect is decreasing
+if $|alpha_1 < 1|$. Imposing this so-called stability condition allows us to
+determine the long-run effect of a unit change in $x$.
+It is given by the **long-run multiplier** (or equilibrium multiplier)
+$$
+\begin{split}
+ \beta_0 & + (alpha_1 \beta_0 + \beta_1) + \alpha_1 (alpha_1 \beta_0 + \beta_1) + \ldots \\
+  & = \beta_0 + (alpha_1 \beta_0 + \beta_1) (1 + \alpha_1 + \alpha_1^2 + \ldots) \\
+    & = \dfrac{\beta_0 + \beta_1}{1-\alpha_1}
+\end{split}
+$$
+which can be expressed as
+$$
+\dfrac{\beta(1)}{\alpha(1)}.
+$$
+The long-run equilibrium relation between $y$ and $x$ can be seen to be
+(imposing $E[y_t] = E[y_{t-1}] = \mu_y$, $E[x_t] = E[x_{t-1}] = \mu_x$)
+$$
+\mu_y = \dfrac{\delta}{1 - \alpha_1} + \dfrac{\beta_0 + \beta_1}{1 - \alpha_1} \mu_x
+$$
+which presents an alternative derivation of the long-run multiplier.
