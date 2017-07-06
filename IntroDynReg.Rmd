@@ -496,7 +496,38 @@ both a given theory and the associated data; some of the methodological consider
 discussed below help clarify that choice.
 
 
-# Interpretation. Dynamic Multipliers
+# Interpretation
+
+Time series analysis presents challenges to the interpretation of estimated models unlike
+those of cross-sectional data. These challenges have often gone unmet, leaving theories about
+dynamics under-tested. In this section,
+we explain the types of dynamic quantities that can be derived for each general model.
+
+In cross-sectional analysis, all estimated effects are necessarily contemporaneous and
+therefore static. Cross-sectional data do not allow us to assess whether causal effects are
+contemporaneous or lagged, let alone whether some component is distributed over future
+time periods. In contrast, consider two types of effects we encounter in time series models:
+
+* An exogenous variable may have only short term effects on the outcome variable. These
+may occur at any lag, but the effect does not persist into the future. The reaction of
+economic prospections to the machinations of politicians, for example, may be quite
+ephemeral-influencing evaluations today, but not tomorrow. Here the effect of $x_t$ on
+$y_t$ has no memory.
+
+* An exogenous variable may have both short and long term effects. In this case, the
+changes in $x_{t-s}$ affect $y_t$, but that effect is distributed across several
+future time periods. Often this occurs because the adjustment process necessary to maintain long run
+equilibrium is distributed over some number of time points. Levels of democracy may
+affect trade between nations both contemporaneously and into the future. These effects
+may be distributed across only a few or perhaps many future time periods. How many
+time periods is an empirical question that can be answered with our data.
+
+Dynamic specifications allow us to estimate and test for both short and long run effects
+and to compute a variety of quantities that help us better understand politics. Short run
+effects are readily available in both the ADL and the ECM. We next review the mechanics
+of long run effects.
+
+## Dynamic Multipliers
 
 Assuming that your model is the usual ADL(1,1) we have been considering so far
 \begin{equation}
@@ -547,3 +578,94 @@ $$
 \mu_y = \dfrac{\delta}{1 - \alpha_1} + \dfrac{\beta_0 + \beta_1}{1 - \alpha_1} \mu_x
 $$
 which presents an alternative derivation of the long-run multiplier.
+
+In some cases, long run equilibria and the long run multiplier are
+of greater interest than short run effects. Policymakers, for example, debate the optimal
+defense spending needed to generate a sustained peaceful equilibrium or the long run effects
+of deficit spending on economic growth.
+
+## Forgotten Dynamic Quantities: Mean and Median Lag Lengths
+
+Other quantities that inform us about economics can be computed from dynamic regressions.
+In addition to knowing the magnitude of the total effect of a shock as measured by the long
+run multiplier, it is often useful to know how many periods it takes for some portion of the
+total effect of a shock to dissipate or how much of the shock has dissipated after some number
+of periods. The mean and median of the lag distribution of $x_t$ provide information about
+the pattern of adjustment a series Yt makes to disequilibrium.
+
+The median lag tells us the
+first lag, $r$, at which at least half of the adjustment toward long run equilibrium has occurred
+following a shock to $x_t$, providing information about the speed with which the majority of a
+shock dissipates. It is calculated by listing the effect of a unit change in $x_t$ at each successive
+lag, standardizing it as a proportion of the cumulative effect, and then noting at which lag
+the sum of these individual effects exceeds half of the long run effect. A median lag of 0 tells
+us that half of the effect is gone in the period it has occurred. We might expect such short
+median lags when equilibria are very 'tight', that is, lagged Yt has a small coefficient and
+$x_t$ a large one.
+
+Mean
+lags tell us us how long it takes to adjust back to equilibrium, the average amount of time
+for a shock to play out.
+
+Median lag lengths are somewhat tedious to calculate. When deriving the formula for the median lag, it is useful to write the
+general model using lag polynomials:
+$$
+A(L) y_t = B(L) x_t + \varepsilon_t,
+$$
+where
+\begin{align*}
+A(L) & = 1 - \alpha_1L - \alpha_2 L^2 - \ldots - \alpha_p L^p \\
+B(L) = \beta_0 + \beta_1 L + \beta_2 L^2 + \ldots + \beta_q L^q.
+\end{align*}
+
+We can calculate the median lag by computing m for successive values of $R$ and recording
+the value of $R$ when $m \geq 0.5$:
+$$
+m = \dfrac{\sum_{r=0}^R \omega_r}{\sum_{r=0}^\infty \omega_r},
+$$
+where
+$$
+\omega(L) = \dfrac{B(L)}{A(L)},
+$$
+and
+$$
+\sum_{r=0}^\infty \omega_r = \dfrac{B(L)}{A(L)} =
+\dfrac{1 - \alpha_1 - \ldots - \alpha^p}
+{\beta_0 + \beta_1 + \ldots + \beta_q}
+$$
+
+$\omega_r$ represents the effect
+of a shock r periods after it occurs. The denominator summation is across
+all values of time
+and thus provides the familiar long run effect, $k_1$. The numerator
+summation allows us to
+calculate effects through any number of periods, $R$. The division in
+the equation thus normalizes the adjustment as a proportion of the total
+adjustment through $r$ periods. It is often
+useful to graph the standardized lag distribution to see patterns in effects.
+Graphs of lag distributions help answer questions such as: 'What proportion of the total
+effect has dissipated after 4 time periods?'' Unstandardized lag distributions or cumulative
+standardized lag distributions may also provide useful visuals for policy proscriptions.
+
+In contrast, the mean lag length tells us how long it takes to adjust back to equilibrium.
+The mean lag for $x$ is given by:
+$$
+\mu = \dfrac{W^\prime(L)}{W(L)} =
+\dfrac{B^\prime(L)}{B(L)}  \dfrac{A^\prime(L)}{A(L)} =
+\dfrac{\sum_{r=0}\infty r \omega_r}{\sum_{r=0}^\infty \omega_r}.
+$$
+It may also be calculated as
+$$
+\mu = \dfrac{W^\prime(L)}{W(L)}_{|L=1}.
+$$
+
+Mean and median lags are useful when we wish to know how many periods it takes for
+a process to return to equilibrium. If the level of economic expectations increases, how long
+will it take to see movement in trust to its new equilibrium value? Is change fast or slow?
+A President looking ahead to his reelection campaign may be particularly interested in the
+length of time it takes the public to forget a recession.
+
+When both the
+median and mean lag length are small, adjustment is fast, when the median is short and the
+mean long, a large part of the disequilibrium is corrected quickly while the long run response
+takes some time to complete the adjustment.
