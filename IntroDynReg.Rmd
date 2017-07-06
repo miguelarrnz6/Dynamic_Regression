@@ -671,6 +671,98 @@ mean long, a large part of the disequilibrium is corrected quickly while the lon
 takes some time to complete the adjustment.
 
 
+# Inference
+
+## Linear Hypothesis Testing
+
+## HAC Covariance Matrix
+
+Since residual autocorrelation and residual heteroscedasticity both bias estimated coefficient
+standard errors, corrections have been developed.
+
+The notation for the linear model is as follows
+\begin{equation}
+y_t = \sum_{i=1}^k \beta_i x_{i,t} + \varepsilon_t =
+  \mathbf{\beta}^\prime  \mathbf{x}_t +
+  \varepsilon_t \qquad \varepsilon_t \sim iid N(0, \sigma^2_\varepsilon),
+\end{equation}
+where $\mathbf{\beta}$ is $k \times 1$, and
+$E[\mathbf{x}_t \varepsilon_t] = \mathbf{0}$.
+
+Now we take
+$$
+\varepsilon_t \sim  N(0, \sigma^2_{t})
+$$
+with
+$$
+E[\mathbf{x}_t \varepsilon_s] = \mathbf{0} \quad \forall t,s
+$$
+but we mistakely beleieve that
+
+
+
+
+
+# Granger Causality
+
+## Granger Non-causality test
+
+All these characterisations can be used for testing causality. In 1972,
+CHRISTOPHER A. SIMS was the first to propose a test for simple Granger
+causal relations. This test was based on the moving average representation.
+However, some problems occurred with this procedure. Therefore, it is
+hardly applied today and will not be discussed here. THOMAS J. SARGENT
+(1976) proposed a procedure which is directly derived from the Granger
+causality definition. It is usually denoted as the direct Granger procedure.
+LARRY D. HAUGH and DAVID A. PIERCE (1977) proposed a test which uses
+the estimated residuals of the univariate models for x and y. Finally,
+CHENG HSIAO (1979) proposed a procedure to identify and estimate bivariate
+models which - like the direct Granger procedure - is based on autoregressive
+representation and can also be interpreted (at least implicitly) as
+causality tests. We will present these three procedures and illustrate them
+by examples
+
+As mentioned above, this procedure proposed by THOMAS J. SARGENT
+(1976) is directly derived from the Granger definition of causality. Similar
+to the method of CLIVE W.J. GRANGER (1969), a linear prediction function
+is employed. In the following, let $x$ and $y$ be two stationary variables. To
+test for simple causality from x to y, it is examined whether the lagged
+values of x in the regression of y on lagged values of x and y significantly
+reduce the error variance. By using OLS, the following equation is estimated:
+\begin{equation}
+y_t = \delta + \alpha_1 y_{t-1} + \ldots + \alpha_p y_{t-p} +
+\beta_1 x_{t-1} + \ldots + \beta_q x_{t-q} + \varepsilon_t.
+\end{equation}
+NOTICE THAT THERE IS NOT CONTEMPORANEOUS EFFECT. yOU MUST ESTIMATE A MODEL FROM
+SCRATCH: DO NOT JUST DROP THE TERM.
+
+An $F$-test is applied to test the null hypothesis
+$$
+H_0: \beta_1 = \beta_2 = \ldots = \beta_q = 0.
+$$
+By changing $x$ and $y$ in the previous equation, it can be tested whether a
+simple causal relation from $y$ to $x$ exists. There is a feedback relation if the
+null hypothesis is rejected in both directions.
+
+According to Theorem 3.1 given
+above, we expect the same result for testing the equation for $y$ and for $x$.
+However, as our data are based on finite samples, we will generally get
+different numerical values for the test statistics. However, with $p=q$, i.e.
+if we include the same number of lagged variables for the dependent as
+well as for the explanatory variable in both test equations, we get exactly
+the same numerical values for the test statistics. The reason for this is that
+the $t$ or $F$ statistics are functions of the partial correlation coefficient between
+$x$ and $y$. Its value does not depend on the direction of the regression;
+it only depends on the correlation between the two variables and the set of
+conditioning variables which are included. If $p=q$, the same conditioning
+variables are included, irrespectively of the dependent variable.
+
+One problem with this test is that the results are strongly dependent on
+the number of lags of the explanatory variable, $q$. There is a trade-off: the
+more lagged values we include, the better the influence of this variable can
+be captured. This argues for a high maximal lag. On the other hand, the
+power of this test is the lower the more lagged values are included.
+
 # Parameter Instability
 
 ## 1-step Ahead Chow Test
@@ -764,7 +856,8 @@ Let's make the predictions for the following 12 months. Notice that:
 
 ## Forecast deterioration test
 
-If you remember the definition of recursive residual, you will see that each recursive residual is a one-step ahead forecast
+If you remember the definition of recursive residual, you will see that
+each recursive residual is a one-step ahead forecast
 
 The $LM$ version would be
 
