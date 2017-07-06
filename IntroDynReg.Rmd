@@ -700,8 +700,148 @@ $$
 but we mistakely beleieve that
 
 
+# Misspecification Tests
+
+## Specification (RESET)
+
+## Normality
+
+**Jarque-Bera test**
+
+The null hypothesis is that they follow a Normal distribution
+
+## Serial Correlation
+
+The model is
+
+$$ y_t = \delta_0 + \sum_{i=1}^p \delta_i y_{t-i} + \sum_{i=0}^q \beta_i x_{t-i} + \epsilon_i$$
+
++ **Durbin**
+
+After estimating the regression by OLS we obtain the residuals and regress those residuals on the original regressors of the equation and lagged values of the residuals (auxiliary regression).
+
+$$ \hat{\epsilon}_t = \sum_{i=1}^p \delta_i y_{t-i} + \sum_{i=0}^q \beta_i x_{t-i} +
+ \gamma_1 \hat{\epsilon}_{t-1} + \ldots + \gamma_k \hat{\epsilon}_{t-k} + \nu_t$$
+and test
+$$ H_0: \gamma_1 = \gamma_2 = \ldots = \gamma_k = 0$$
+using a Wald test (with a HAC covariance matrix estimator)
+
+ + **Breusch-Godfrey test**
+
+ We make use of the residuals of the original regression and build an auxiliary regression:
+
+ $$ \hat{\epsilon}_t = \sum_{i=1}^p \delta_i y_{t-i} + \sum_{i=0}^q \beta_i x_{t-i} +
+ \gamma_1 \hat{\epsilon}_{t-1} + \ldots + \gamma_k \hat{\epsilon}_{t-k} + \nu_t$$
+ and test
+$$ H_0: \gamma_1 = \gamma_2 = \ldots = \gamma_k = 0$$We want to test the null hypothesis
+ The test statistic we use is the product of $T$, the number of observations used in the auxiliary regression, and the $R^2$ of the auxiliary regression. Under H_0:
+ $$ T R^2\sim \chi^2_k$$
+ and if we fail to reject $H_0$ we cannot reject that there is no correlation up to lag $k$.
 
 
+ **Note:** There are small sample corrections to both test that we are not applying.
+
+ + **Ljung-Box test**
+
+ This is the same test we have used in the past.
+
+## Heteroskedasticity
+
++ **White test**
+
+White's test is a test of the null hypothesis of no heteroskedasticity against keteroskedasticity of unknown, general form.
+
+Auxiliary regression where the dependent variable is the squared residuals and the dependent variables are all possible (non-redundant) cross products of the original regressors. For example, if the original regression is
+$$ y_t = \beta_0 + \beta_1 x_t + \beta_2 z_t + \epsilon_t$$
+the auxiliary regression is
+$$ \hat{\epsilon}_t^2 = \alpha_0 + \alpha_1 x_t + \alpha_2 z_t +
+\alpha_3 x_t^2 + \alpha_4 z_t^2 + \alpha_5 x_t z_t + \nu_t$$
+
+The null hypothesis is
+$$ H_0: \alpha_1 = \alpha_2 = \ldots = \alpha_5 = 0$$
+The usual statistic is $T R^2$, and it follows under $H_0$ a $\chi^2$ distribution with degrees of freedom equal to the number of coefficients of the auxiliary regression excluding the intercept.
+
+Notice that we might end up using too many variables in the auxiliary model if the original model has many variables. We need some strategies to eliminate variables in the auxiliary model.
+
+We can eliminate the linear effects (keeping interactions and quadratic effects) if the original regression has no intercept.
+
+We can also eliminate cross products, keeping linear and quadratic effects.
+
+This a very generic test, lacking power when we include too many parameters in the auxiliary regression. It might also detect some other misspecifications of the model.
+
+
++ **Breusch-Pagan test**
+
+In this case we are more specific about the functional form of the variance:
+
+$$ E(\epsilon_t^2) = f(z_t)$$
+where $z$ are the variables in the original regression.
+In the BP test the auxiliary regression is
+
+$$\hat{\epsilon}_t^2 = \gamma_0 + \gamma_1 z_{1,t} + \ldots + \gamma_k z_{k,t} + \nu_t$$
+Remember that $z$ are the variables included in the original regression (lags of $y$ and $x$).
+The test statistic under $H_0$ is
+$$ TR^2 \sim \chi^2(k)$$
+
+
+Another version of the test is the one proposed by **Harvey**
+
+The only difference is that the auxiliary regression is
+$$\log(\hat{\epsilon}_t^2) = \gamma_0 + \gamma_1 z_{1,t} + \ldots + \gamma_k z_{k,t} + \nu_t$$
+There are some small sample corrections that we are not considering.
+
+## ARCH effects
+
+**Conditional heteroskedasticity**
+
+$$ E(\epsilon^2_t | I_{t-1}) = \alpha_0 + \alpha_1 \epsilon^2_{t-1} + \ldots + \alpha_p \epsilon^2_p$$
+
++ Visual inspection
+
+Graph the ACF of the squared residuals of the original equation
+
++ **ARCH-LM Test**
+
+The test is based on the squared residuals of the original equation. We form an auxiliary regression
+ $$ \hat{\epsilon}^2_t = \theta_0 + \theta_1 \hat{\epsilon}^2_{t-1} + \ldots + \theta_k \hat{\epsilon}^2_{t-k} + \nu_t$$
+We want to test the null hypothesis
+ $$ H_0: \quad \theta_1 = \ldots = \theta_k = 0$$
+ and test statistic we use is the product of $T$, the number of observations used in the auxiliary regression, and the $R^2$ of the auxiliary regression. Under H_0:
+ $$ T R^2\sim \chi^2_k$$
+ and if we fail to reject $H_0$ we cannot reject that there is no ARCH up to lag $k$.
+
+Two points:
+
++ You can never remove the constant from the auxiliary regression.
+
++ This test has rather low power. One of the reasons is including too many lags in the auxiliary regression. If you reject $H_0$ with a low number of lags you can be certain that there is ARCH
+
+
+## Roots of polynomials
+
+Write the model as:
+$$ \delta(L) y_t = \delta_0 + \beta(L) x_t + \epsilon_t$$
+or as
+$$ y_t = \dfrac{\delta_0}{\delta(L)} +
+\dfrac{\beta(L)}{\delta(L)} x_t + \dfrac{1}{\delta(L)} \epsilon_t $$
++ Causality
+
+This refers to the absolute values of the roots of the AR polynomial being less than 1.
+
++ Common roots
+
+Check in case you can make the calculations of the dynamic effects of shocks on $x$ easier.
+
+## Granger (Non-)Causality
+
+It is a Wald-type test:
+
+$$ y_t = \delta_0 + \sum_{i=1}^p \delta_i y_{t-i} + \sum_{i=1}^q \beta_i x_{t-1} + \epsilon_t $$
+Null hypothesis
+$$ H_0: \quad \beta_1 = \beta_2 = \ldots = \beta_q = 0 $$
+Restricted model
+$$ y_t = \delta_0 + \sum_{i=1}^p \delta_i y_{t-i} + \epsilon_t$$
+If we cannot reject $H_0$ then $x$ **does not cause** $y$.
 
 # Granger Causality
 
