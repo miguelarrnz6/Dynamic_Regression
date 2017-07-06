@@ -1,0 +1,290 @@
+---
+title: "Dynamic Linear Regression I"
+author: "Miguel A. Arranz"
+date: "October 2016"
+output: 
+  html_document: 
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Goals
+We show how to define a dynamic linear regression, using **dynlm**: lags, differences, interactions
+
+# Packages and Functions
+```{r packages, message=FALSE, warning=FALSE}
+library(quantmod)
+library(forecast)
+library(dynlm)
+library(zoo)
+library(sandwich)
+library(lmtest)
+library(tsoutliers)
+source("myfuncs.R")
+```
+
+
+# Data
+
+Download data from FRED:
+
+INDPRO: Industrial Product Index
+
+TB3MS: 3-Month Treasury Bill: Secondary Market Rate
+
+```{r freddata, message=FALSE, warning=FALSE}
+getSymbols("INDPRO", src="FRED")
+getSymbols("TB3MS", src="FRED")
+
+INDPRO <- INDPRO['2000-01-01/2016-09-30']
+TB3MS <- TB3MS['2000-01-01/2016-09-30']
+
+
+INDPRO <- as.zoo(INDPRO)
+TB3MS <-- as.zoo(TB3MS)
+
+```
+
+We merge the data and extract the elements from the object.
+
+```{r merge}
+datos <- merge(INDPRO, TB3MS, all=F)
+Y = diff(log(datos$INDPRO))
+X= diff(datos$TB3MS)
+```
+
+
+# Dynamic Regressions with dynlm
+
+A simple regression: AR(4)
+
+```{r m0}
+m0 <- dynlm(Y ~ L(Y, 1) + L(Y, 2) + L(Y, 3) + L(Y, 4))
+print(summary(m0))
+
+```
+
+
+$L$ is the lag operator. When using dynlm $L(X,i) = X_{t-i}$ (this is different when using other packages).
+
+```{r m1}
+m1 <- dynlm(Y ~ L(Y, 1:4))
+print(summary(m1))
+
+```
+
+Repeat without intercept
+```{r m1b}
+m1b <- dynlm(Y ~ L(Y, 1:4) - 1)
+print(summary(m1b))
+
+```
+
+Compare with the ARMA model estimation
+
+```{r mar4}
+mar4 <- Arima(as.xts(Y), c(4,0,0), include.mean = F)
+print(armatable(mar4))
+```
+
+It is the same model but obtain different parameter estimates because of **different estimation method**.
+
+If we have to include the exogenous variable $X$ and its lags as in
+$$ Y_t = \varphi Y_{t-1} + \beta_0 X_t + \beta_1 X_{t-1} + \epsilon_t$$
+we proceed as
+
+```{r madl1}
+madl1 <- dynlm(Y ~L(Y, 1) + L(X, 0:1))
+print(summary(madl1))
+```
+Notice that lag 0 of $X_t$ is $X_t$.
+
+How about a regression with leads and lags?
+
+$$ Y_t = \varphi Y_{t-1} + \delta_1 X_{t+1} + \beta_0 X_t + \beta_1 X_{t-1} + \epsilon_t $$
+In this case it would be
+```{r madl2}
+madl2 <- dynlm(Y ~L(Y,1) + L(X,-1) + X + L(X,1))
+print(summary(madl2))
+```
+
+
+
+# Dynamic Linear Regression with other packages
+
+We know that **dynlm** is very flexible, but it is not the only way to estimate dynamic regression models. In fact, if we want to forecast we must use other packages.
+
+## LM
+
+This command is not included in extra extra package.
+
+```{r}
+YS <- as.ts(Y)
+mydata <- cbind(Y, lag(Y,-1), lag(Y, -2), lag(Y, -3), lag(Y, -4))
+names(mydata) <- c("Ylag0", "Ylag1", "Ylag2", "Ylag3", "Ylag4")
+modlm <- lm(Ylag0 ~ Ylag1 + Ylag2 + Ylag3 + Ylag4 - 1, data=mydata)
+print(summary(modlm))
+```
+
+The result is obviously the same. Notice that it is more difficult to write the formula and also the syntax of the **lag** command: the lags number is now negative.
+
+## DYN
+
+This is a packages with interface from **zoo** to other packages
+```{r dyn}
+library(dyn)
+mod.dyn <- dyn$lm(Y ~ lag(Y, -1:-4) - 1)
+print(summary(mod.dyn))
+```
+
+
+
+## GETS
+
+This is a method for automatic modelling:
+
+```{r}
+library(gets)
+YS <- as.xts(Y)
+YT <- as.ts(YS)
+mod.gets <- arx(YT, ar=1:4)
+print(mod.gets)
+
+```
+
+
+
+```{r, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+Mod1.arx <- arx(Y, ar=1:12)
+Mod2.arx <- getsm(Mod1.arx)
+print(Mod2.arx)
+```
+
+
+An ADL model
+$$ Y_t = \sum_{i=1}^4 \varphi_i Y_{t-i} + \beta_0 X_t + \beta_1 X_{t-1} + \epsilon_t$$
+
+```{r get2}
+Xregs <- merge(X, lag(X,-1))
+Mod3.arx <-arx(Y, ar = 1:4, mxreg = Xregs)
+print(Mod3.arx)
+```
+
+Notice that by default there is no constant. We have to include it with the **mc** option
+
+```{r get4}
+Mod4.arx <-arx(Y, ar = 1:4, mxreg = Xregs, mc = T)
+print(Mod4.arx)
+```
+
+
+# Output Analysis
+
+## dynlm
+
+Names of elements in the model
+```{r namesdynlm1}
+names(madl1)
+```
+
+We can extract the elements of interest and work with them:
+
++ Coefficients
+
+```{r dyncoef}
+betas <- madl1$coef
+print(betas)
+```
+
++  Residuals
+
+We can extract the residuals and work with them as usual, sice it is a **zoo** object. That means that we can get fancy plots with ggplot2 and interaactive plots with plotly
+```{r dynres}
+uhat <- madl1$residuals
+class(uhat)
+head(uhat)
+tail(uhat)
+```
+Do we need the value of the SSR?
+
+```{r ssr}
+ssr1 <- sum(uhat*uhat)
+print(ssr1)
+ssr2 <- crossprod(uhat, uhat)
+print(ssr2)
+ssr3 <- crossprod(uhat)
+print(ssr3)
+```
+
++ Fitted values
+
+You can extract them with
+```{r fit}
+yhat <- madl1$fitted.values
+```
+and, again, it is a **zoo** class object
+```{r}
+class(yhat)
+```
+
+Names of elements in the summary of the model
+```{r namesdynlm2}
+names(summary(madl1))
+```
+
++ $T R^2$ statistic
+
+We are using this test statistic in many applications
+```{r tr2}
+smadl1 <- summary(madl1)
+T <- length(smadl1$residuals)
+R2 <- smadl1$r.squared
+TR2 <- T*R2
+print(TR2)
+```
+
++ Variance-covariance matrix
+
+Be careful with cov.unscale matrix
+
+The variance-covariance matrix is 
+```{r}
+vcov(madl1)
+```
+and you can obtain it as
+```{r vcov2}
+sigma2 <- smadl1$sigma^2
+V <- smadl1$cov.unscaled*sigma2
+print(V)
+```
+
+
+## lm
+
+Names of elements in the model
+```{r nameslm1}
+names(modlm)
+```
+Names of elements in the summary of the model
+```{r nameslm2}
+names(summary(modlm))
+```
+
+## dyn
+
+Names of elements in the model
+```{r namesdyn1}
+names(mod.dyn)
+```
+Names of elements in the summary of the model
+```{r namesdyn2}
+names(summary(mod.dyn))
+```
+## gets
+
+Names of elements in the model
+```{r namesgets}
+names(madl2)

@@ -615,7 +615,7 @@ $$
 where
 \begin{align*}
 A(L) & = 1 - \alpha_1L - \alpha_2 L^2 - \ldots - \alpha_p L^p \\
-B(L) = \beta_0 + \beta_1 L + \beta_2 L^2 + \ldots + \beta_q L^q.
+B(L) & = \beta_0 + \beta_1 L + \beta_2 L^2 + \ldots + \beta_q L^q.
 \end{align*}
 
 We can calculate the median lag by computing m for successive values of $R$ and recording
@@ -629,7 +629,7 @@ $$
 $$
 and
 $$
-\sum_{r=0}^\infty \omega_r = \dfrac{B(L)}{A(L)} =
+\sum_{r=0}^\infty \omega_r = \dfrac{B(1)}{A(1)} =
 \dfrac{1 - \alpha_1 - \ldots - \alpha^p}
 {\beta_0 + \beta_1 + \ldots + \beta_q}
 $$
@@ -651,8 +651,8 @@ In contrast, the mean lag length tells us how long it takes to adjust back to eq
 The mean lag for $x$ is given by:
 $$
 \mu = \dfrac{W^\prime(L)}{W(L)} =
-\dfrac{B^\prime(L)}{B(L)}  \dfrac{A^\prime(L)}{A(L)} =
-\dfrac{\sum_{r=0}\infty r \omega_r}{\sum_{r=0}^\infty \omega_r}.
+\dfrac{B^\prime(L)}{B(L)} - \dfrac{A^\prime(L)}{A(L)} =
+\dfrac{\sum_{r=0}^\infty r \omega_r}{\sum_{r=0}^\infty  \omega_r}.
 $$
 It may also be calculated as
 $$
@@ -669,3 +669,128 @@ When both the
 median and mean lag length are small, adjustment is fast, when the median is short and the
 mean long, a large part of the disequilibrium is corrected quickly while the long run response
 takes some time to complete the adjustment.
+
+
+# Parameter Instability
+
+## 1-step Ahead Chow Test
+
+For each sample $Y_1, Y_2, \ldots, Y_m$, it is tested whether the next observation
+comes from the same model as $Y_0, Y_1, \ldots, Y_{m-1}$. The unrestricted model is
+
+$$
+\begin{cases}
+Y_t = \beta_1 Y_{t-2} + \ldots + \epsilon_t & \forall t =1, 2, \ldots , m-1 \\
+Y_m \text{ unrestricted}
+\end{cases}
+$$
+whereas the restricted model is that the model governs the full sample.
+
+The idea is to see whether the model based on $Y_1, Y_2, \ldots, Y_m$ is good at
+forecasting $Y_m$ for every feasible $m$. We use an $F$-type statistic
+
+$$\dfrac{RSS_m - RSS_{m-1}}{RSS_{m-1}/(m-1-k)} \sim \chi^2(1)$$
+where the denominator is the estimate of $\sigma^2$ for the recursive
+residuals up to $m-1$.
+
+## Break-Point Chow Test
+
+This is a variation of the 1-step Chow test. The idea is to see whether a model
+based on $Y_1, Y_2, \ldots, Y_{m-1}$ is good at forecasting all the remaining
+variables $Y_m, \ldots, Y_T$. The forecast horizon $T_m+1$
+therefore decreases with $m$.
+
+The unrestricted residual sum of squares is thus $RSS_{m-1}$ and the
+restricted model residual sum of squares is $RSS_T$. Hence, the test
+is based on the statistic
+
+$$ \dfrac{RSS_T - RSS_{m-1}}{RSS_{m-1}/(T-m+1)}  \sim \chi^2(T_m+1)$$
+or, if we think as the problem of dividing the sample in two subsamples,
+the first with $T_1$ and the second with $T_2$ observations, the test statistic is
+$$ \dfrac{RSS_T - RSS_1}{\sigma_1^2} \sim \chi^2 (T_2)$$
+
+
+## Forecast Chow Test
+
+The idea is to see if a model based on the shortest sample
+$Y_1, \ldots , Y_{M-1}$, can forecast $Y_M, \ldots, Y_m$, where $m$ increases
+from $M$ to $T$. The unrestricted residual sum of squares is $RSS_{M-1}$,
+while the restricted residuals sum of squares is $RSS_m$ and hence the tests are based on
+
+$$ \dfrac{RSS_m - RSS_{M-1}}{\hat{\sigma}^2_{M-1}} \sim \chi^2(m-M+1)$$
+Let's change the notation to make it clear.
+
+1. We take a first sample to estimate the model $Y_1, \ldots , Y_{M}$
+and obtain the residual sum of squares $(RSS_M)$ and the variance of
+the residuals $(\hat{\sigma}^2_{M})$.
+2. Take a second sample $Y_1, \ldots , Y_{M}, \ldots Y_{M+H}$ and obtain the
+sum of squared residuals $RSS_{M+H}$.
+3. The test statistic is
+
+$$ \dfrac{RSS_{M+H} - RSS_{M}}{\hat{\sigma}^2_{M}} \sim \chi^2(H)$$
+
+We can:
+
+* take $M$ as fixed and change the values of $H$ and thus obtain a forecast
+deterioration test with a fixed origin and changing forecast horizon, or
+* increase the value of $M$ while keeping $H$ constant.
+
+# Dynamic Forecasting
+
+It is really simple. We just have to apply the formula
+
+$$ Y_{T+h|T} = \beta_1 Y_{T+h-2|T} + \beta_2 Y_{T+h-3|T} + \beta_3 Y_{T+h-4|T}
++ \beta_4 X_{T+h-1|T} + \beta_5 X_{T+h-3|T} $$
+
+That means that for $h= 1, 2$ we will be using **actual values** of $Y$.
+For $h>2$ we have to start using **predicted values**.
+
+We have to get a model to obtain forecasts of $X$ unless we assume it is exogenous and know the future values.
+
+
+Sources of forecasting errors:
+
+1. sampling error
+2. The parameters change out of sample
+3. The model changes out of sample
+4. We do not have good forecasts for out-of sample values of $X$.
+
+Let's make the predictions for the following 12 months. Notice that:
+
+1. We are making a dynamic forecast of $Y$ as in Eviews.
+2. We are taking the actual values of $X$, and thus assuming it is really
+3. exogenous. We should in fact build an univariate model for $X$ and
+4. obtain forecasts from it.
+
+## Forecast deterioration test
+
+If you remember the definition of recursive residual, you will see that each recursive residual is a one-step ahead forecast
+
+The $LM$ version would be
+
+$$ HF(T_2) = \sum_{t=T_1+1}^{T} \dfrac{(\hat{\epsilon}_{2,t} | \hat{\beta}_1)^2}{\hat{\sigma}^2_1}$$
+or, equivalently, if we define
+$$ \tilde{\sigma}^2_2 = \dfrac{\sum_{t=T_1+1}^{T} (\hat{\epsilon}_{2,t} | \hat{\beta}_1)^2}{T_2}$$
+then
+$$ HF(T_2) = T_2 \dfrac{\tilde{\sigma}^2_2}{\hat{\sigma}^2_1}$$
+Under
+$$ H_0: \beta_2 = \beta_1$$
+and
+$$ \sigma_1 = \sigma_2 $$
+the values of $HF$ cannot be very large.
+
+$$
+HF(T_2) \sim \chi^2(T_2)
+$$
+
+## 1-Step Ahead Forecasts: Time Series Cross-Validation
+
+We are applying a recursive forecast procedure in which we are doing as follows:
+
+1. Estimate the parameters with an initial sample
+2. make a 1-step ahead forecast
+3. Incorporate the new observation to the sample
+4. Go back to step 1
+
+It is exactly what we did with ARIMA models and we called it
+**time series cross-validation**

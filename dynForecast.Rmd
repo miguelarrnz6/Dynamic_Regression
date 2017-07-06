@@ -1,0 +1,230 @@
+---
+title: "Dynamic Regression 4: Forecasting"
+author: "Miguel A. Arranz"
+date: "November 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Goals
+
+Make forecasts based on a dynamic linear regression model
+
+# Packages and data
+
+```{r packages, warning=FALSE, message=FALSE, error=FALSE}
+library(quantmod)
+library(dynlm)
+library(tseries)
+library(forecast)
+library(lmtest)
+library(sandwich)
+library(ggplot2)
+library(plotly)
+library(tsoutliers)
+source("myfuncs.R")
+library(gets)
+library(dyn)
+library(bookdown)
+```
+
+Download data
+```{r datadownload, message=FALSE, warning=FALSE}
+symbols.vec <- c("INDPRO", "GS10")
+
+getSymbols(symbols.vec, src="FRED")
+
+INDPRO <- INDPRO['2000-01-01/2016-06-30']
+GS10 <- GS10['2000-01-01/2016-06-30']
+
+y <- as.zoo(diff(log(INDPRO)))
+x <- as.zoo(diff(GS10))
+
+y <- y[-1]
+x <- x[-1]
+```
+
+
+
+
+# Model Estimation
+
+```{r model1}
+Xregs <- merge(lag(x, -1), lag(x,-3))
+Mod1.arx <-arx(y, ar = 2:4, mxreg = Xregs, plot=F, vcov.type = "white")
+#print(Mod1.arx)
+```
+
+
+# Dynamic Forecasting
+
+It is really simple. We just have to apply the formula
+
+$$ Y_{T+h|T} = \beta_1 Y_{T+h-2|T} + \beta_2 Y_{T+h-3|T} + \beta_3 Y_{T+h-4|T}
++ \beta_4 X_{T+h-1|T} + \beta_5 X_{T+h-3|T} $$
+
+That means that for $h= 1, 2$ we will be using **actual values** of $Y$. For $h>2$ we have to start using **predicted values**. 
+
+We have to get a model to obtain forecasts of $X$ unless we assume it is exogenous and know the future values.
+
+
+Sources of forecasting errors:
+
+1. sampling error
+
+2. The parameters change out of sample
+
+3. The model changes out of sample
+
+4. We do not have good forecasts for out-of sample values of $X$.
+
+```{r recursive}
+recModel1.arx <- recursive(Mod1.arx)
+```
+
+
+Let's take the training set from January 2000 to June 2015
+
+
+```{r dyn0}
+yz <- y[1:185]
+xz <- x[1:185]
+vy <- coredata(y)
+vx <- coredata(x)
+
+
+mod.dyn0 <- dynlm(yz ~ L(yz, 2:4) + L(xz, 1) +L(xz,3) - 1)
+summary(mod.dyn0)
+```
+
+and now let's make the predictions for the following 12 months. Notice that:
+
+1. We are making a dynamic forecast of $Y$ as in Eviews.
+
+2. We are taking the actual values of $X$, and thus assuming it is really exogenous. We should in fact build an univariate model for $X$ and obtain forecasts from it.
+
+Notice that I have created two variables, $vX$ and $vY$ using **coredata**. The effect is stripping down the dates from the zoo object, given that there are issues when applying the recursions. The result is a matrix (vector) object
+
+```{r ypred}
+ypred <- array(dim=12)
+betas <- mod.dyn0$coefficients
+for (i in 1:12)
+{
+  k <- 185 + i
+   vy[k] <- betas[1]*vy[(k-2)] + betas[2]*vy[(k-3)] 
+   + betas[3]*vy[(k-4)]  + betas[4]*vx[(k-1)] + betas[5]*vx[(k-3)]
+}
+ypred <- vy[186:197]
+ypred12 <- zoo(ypred, time(y)[186:197])
+```
+
+Let's make a plot
+```{r fore12}
+autoplot(ypred12) + xlab("") + ylab("") + labs(title="12-step Ahead Forecast",
+                                               subtitle="Dynamic Forecast")
+```
+
+and comparing to the actual data
+```{r fore12a}
+fore12a <- merge(ypred12, y, all=F)
+names(fore12a) <- c("Predicted", "Actual")
+autoplot(fore12a, facets=NULL) + xlab("") + ylab("") + labs(title="12-step Ahead Forecast",
+                                               subtitle="Dynamic Forecast")
+```
+
+
+
+The  forecast errors are
+
+```{r forerr12}
+forerr12 <- y[186:197] - ypred12
+accuracy(coredata(ypred12), coredata(y[186:197]))
+```
+
+## Forecast deterioration test
+
+If you remember the definition of recursive residual, you will see that each recursive residual is a one-step ahead forecast
+
+The $LM$ version would be
+
+$$ HF(T_2) = \sum_{t=T_1+1}^{T} \dfrac{(\hat{\epsilon}_{2,t} | \hat{\beta}_1)^2}{\hat{\sigma}^2_1}$$
+or, equivalently, if we define
+$$ \tilde{\sigma}^2_2 = \dfrac{\sum_{t=T_1+1}^{T} (\hat{\epsilon}_{2,t} | \hat{\beta}_1)^2}{T_2}$$
+then 
+$$ HF(T_2) = T_2 \dfrac{\tilde{\sigma}^2_2}{\hat{\sigma}^2_1}$$
+Under
+$$ H_0: \beta_2 = \beta_1$$
+and
+$$ \sigma_1 = \sigma_2 $$
+the values of $HF$ cannot be very large. 
+
+$$
+HF(T_2) \sim \chi^2(T_2) 
+$$
+
+Let's construct the test statistic
+```{r HFT12}
+num <- sum(forerr12^2)
+sigma1 <- summary(mod.dyn0)$sigma
+den <- sigma1*sigma1
+HFT <- num/den
+cat("HF Test Statistic ", HFT, " p-value ", pchisq(HFT, length(forerr12), lower.tail = F))
+```
+
+
+# 1-Step Ahead Forecasts: Time Series Cross-Validation
+
+We are applying a recursive forecast procedure in which we are doing as follows:
+
+1. Estimate the parameters with an initial sample
+
+2. make a 1-step ahead forecast
+
+3. Incorporate the new observation to the sample
+
+4. Go back to step 1
+
+It is exactly what we did with ARIMA models and we called it **time series cross-validation**
+
+```{r tscv}
+N0 <- 43
+T <- length(y) - N0 
+ypred <- array(dim=T)
+vy <- coredata(y)
+vx <- coredata(x)
+
+for (i in 1:T-1)
+{
+  k <- N0+i
+  yz <- y[1:k]
+  xz <- x[1:k]
+  mod.dyn0 <- dynlm(yz ~ L(yz, 2:4) + L(xz, 1) +L(xz,3) - 1)
+  betas <- mod.dyn0$coefficients
+  ypred[i] <- betas[1]*vy[(k-1)] + betas[2]*vy[(k-2)] 
+   + betas[3]*vy[(k-3)]  + betas[4]*vx[(k)] + betas[5]*vx[(k-2)]
+}
+ypred1 <- zoo(ypred, time(y)[(N0+2):length(y)])
+```
+
+The forecast errors are
+```{r recfor}
+recferr <- y[(N0+2):length(y)] - ypred1
+```
+
+The accuracy measures are
+```{r recaccu}
+accuracy(coredata(ypred1), coredata(y[(N0+2):length(y)]))
+```
+
+Let's make a graph
+
+```{r recgraph, warning=FALSE, error=FALSE, message=FALSE}
+recdata <- merge(ypred1, y, all=F)
+names(recdata) <- c("Predicted", "Actual")
+autoplot(recdata, facets=NULL) + xlab("") + ylab("") + labs(title="1-step Ahead Forecasts",
+                                               subtitle="Recursive Dynamic Forecast")
+```
+

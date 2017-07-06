@@ -1,0 +1,415 @@
+---
+title: "Dynamic Regression 3: Parameter Stability"
+author: "Miguel A. Arranz"
+date: " November 2016 "
+output: 
+  html_document: 
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Goals
+
+Perform stability analysis of dynamic linear regression model coefficients
+
+# Packages and data
+
+```{r packages, warning=F, message=F, error=F}
+library(quantmod)
+library(dynlm)
+library(tseries)
+library(forecast)
+library(lmtest)
+library(sandwich)
+library(ggplot2)
+library(plotly)
+library(tsoutliers)
+source("myfuncs.R")
+library(gets)
+library(dyn)
+```
+
+Download data
+```{r datadownload, message=FALSE, warning=FALSE}
+symbols.vec <- c("INDPRO", "GS10")
+
+getSymbols(symbols.vec, src="FRED")
+
+INDPRO <- INDPRO['2000-01-01/2016-06-30']
+GS10 <- GS10['2000-01-01/2016-06-30']
+
+y <- as.zoo(diff(log(INDPRO)))
+x <- as.zoo(diff(GS10))
+
+```
+
+
+
+
+# Recursive Model Estimation
+
+```{r model1, error=FALSE}
+Xregs <- merge(lag(x, -1), lag(x,-3))
+Mod1.arx <-arx(y, ar = 2:4, mxreg = Xregs, plot=F, vcov.type = "white", verbose = T)
+#print(Mod1.arx)
+```
+
+```{r recursive}
+recModel1.arx <- recursive(Mod1.arx)
+
+```
+
+I will start in 2003-08-01, which is observation 44
+
+```{r N0}
+N0 <- which(time(x)==as.Date("2003-08-01"))
+N0
+```
+
+The number of recursive estimations is going to be
+```{r}
+N <- length(y) - N0 + 1
+N
+```
+
+So that I create a matrix for the coefficients and a vector for the recursive sum of squared residuals
+```{r betamatrix}
+betamatrix <- matrix(ncol=5, nrow = N)
+betamatrix <- zoo(betamatrix, time(y)[N0:length(y)])
+RSSR <- array(dim = N)
+sigma12 = RSSR
+RSSR <- zoo(RSSR, time(y)[N0:length(y)])
+```
+
+I will construct the starting points as $N+i$ so that the first one will be $N+i = 164$. That means that I have to reduce it by 1
+```{r}
+N0 <- N0-1
+```
+
+Now we make the estimations
+```{r recgets}
+for(i in 1:N)
+{
+  k <- N0 + i
+  vy <- y[1:k]
+  vx <- x[1:k]
+  
+  tempmodel <- dynlm(vy ~ L(vy, 2:4) + L(vx, 1) + L(vx,3) - 1) 
+  betamatrix[i,] <- tempmodel$coefficients
+  ssr <- drop(crossprod(tempmodel$residuals))
+  RSSR[i] <- ssr
+  sigma1 <- summary(tempmodel)$sigma
+  sigma12[i] <- sigma1*sigma1
+}
+
+colnames(betamatrix) <- names(tempmodel$coefficients)
+```
+
+Make graphs
+
+```{r recgraphs}
+p1 <- autoplot(betamatrix[,1])+ ylab("") + xlab("") + labs(title=expression(Y[t-2]),
+                                                           subtitle="Recursive Estimation")
+p2 <- autoplot(betamatrix[,2])+ ylab("") + xlab("") + labs(title=expression(Y[t-3]),
+                                                           subtitle="Recursive Estimation")
+p3 <- autoplot(betamatrix[,3])+ ylab("") + xlab("") + labs(title=expression(Y[t-4]),
+                                                           subtitle="Recursive Estimation")
+p4 <- autoplot(betamatrix[,4])+ ylab("") + xlab("") + labs(title=expression(X[t-1]),
+                                                           subtitle="Recursive Estimation")
+p5 <- autoplot(betamatrix[,5])+ ylab("") + xlab("") + labs(title=expression(X[t-3]),
+                                                           subtitle="Recursive Estimation")
+
+```
+
+Interactive graphs
+
+```{r inrec}
+ggplotly(p1)
+ggplotly(p2)
+ggplotly(p3)
+ggplotly(p4)
+ggplotly(p5)
+```
+
+
+Possible changes of regime:
+
++ $\beta_1$ : 2005-09-01/10-01, 2005-11/2007-01-01, 2007-01/2008-06, 2008-09-01 (AO),
+2008-12-01/End
+
++ $\beta_2$ 2005-11/2006-01, 2006-02/2008-07, 2008-12 (AO), 2009-10/End
+
++ $\beta_3$ 2004-11/2005-09, 2006-01/2008-07, 2009-09/End
+
++ $\beta_4$  2004-12/2005-10, 2005-12/2008-10, 2009-07/End
+
++ $\beta_5$ 2008-09/2009-07
+
+# Chow Tests
+
+## 1-step Ahead Chow Test
+
+For each sample $Y_1, Y_2, \ldots, Y_m$, it is tested whether the next observation comes from the same model as $Y_0, Y_1, \ldots, Y_{m-1}$. The unrestricted model is
+
+$$ 
+\begin{cases}
+Y_t = \beta_1 Y_{t-2} + \ldots + \epsilon_t & \forall t =1, 2, \ldots , m-1 \\
+Y_m \text{ unrestricted}
+\end{cases}
+$$
+whereas the restricted model is that the model governs the full sample.
+
+The idea is to see whether the model based on $Y_1, Y_2, \ldots, Y_m$ is good at forecasting $Y_m$ for every feasible $m$. We use an $F$-type statistic
+
+$$\dfrac{RSS_m - RSS_{m-1}}{RSS_{m-1}/(m-1-k)} \sim \chi^2(1)$$
+where the denominator is the estimate of $\sigma^2$ for the recursive residuals up to $m-1$.
+
+
+```{r chow1}
+chow1 <- (coredata(RSSR)[-1] - coredata(RSSR)[-N])/sigma12[-N]
+cvalue <- qchisq(0.99, df=1)
+chow1 <- chow1/cvalue
+chow1 <- zoo(chow1, time(RSSR))
+autoplot(chow1) + xlab("") + ylab("") + labs(title="1-step ahead Chow test", 
+                                             subtitle="Normalized by the 1% critical value")
+which(chow1>1)
+w <- which(chow1>1)
+time(RSSR)[w]
+```
+
+Notice that we have normalized by the 1% critical value, so that the horizontal line at 1 gives the critical value of the test. 
+
+At least 2 or 3 rejections would be needed to reject the model based on this type of test.
+
+## Break-Point Chow Test
+
+This is a variation of the 1-step Chow test. The idea is to see whether a model based on $Y_1, Y_2, \ldots, Y_{m-1}$ is good at forecasting all the remaining variables $Y_m, \ldots, Y_T$. The forecast horizon $T_m+1$ therefore decreases with $m$.
+
+The unrestricted residual sum of squares is thus $RSS_{m-1}$ and the restricted model residual sum of squares is $RSS_T$. Hence, the test is based on the statistic
+
+$$ \dfrac{RSS_T - RSS_{m-1}}{RSS_{m-1}/(T-m+1)}  \sim \chi^2(T_m+1)$$
+or, if we think as the problem of dividing the sample in two subsamples, the first with $T_1$ and the second with $T_2$ observations, the test statistic is
+$$ \dfrac{RSS_T - RSS_1}{\sigma_1^2} \sim \chi^2 (T_2)$$
+
+```{r chow2}
+chow2 <- (coredata(RSSR)[N] - coredata(RSSR)[-N])/sigma12[-N]
+cvalues <- qchisq(.99, (N-1):1)
+chow2 <- chow2/cvalues
+chow2 <- zoo(chow2, time(RSSR)[1:(N-1)])
+autoplot(chow2) + xlab("") + ylab("") +labs(title="Break-Point Chow Test", 
+                                            subtitle="Normalized by 1% Critical Value")
+time(chow2)[which(chow2>1)]
+```
+
+
+What is the point with the maximum value for the test?
+
+```{r maxchow2}
+time(RSSR)[which(chow2==max(chow2))]
+```
+
+
+## Forecast Chow Test
+
+The idea is to see if a model based on the shortest sample $Y_1, \ldots , Y_{M-1}$, can forecast $Y_M, \ldots, Y_m$, where $m$ increases from $M$ to $T$. The unrestricted residual sum of squares is $RSS_{M-1}$, while the restricted residuals sum of squares is $RSS_m$ and hence the tests are based on
+
+$$ \dfrac{RSS_m - RSS_{M-1}}{\hat{\sigma}^2_{M-1}} \sim \chi^2(m-M+1)$$
+Let's change the notation to make it clear. 
+
+1. We take a first sample to estimate the model $Y_1, \ldots , Y_{M}$ and obtain the residual sum of squares $(RSS_M)$ and the variance of the residuals $(\hat{\sigma}^2_{M})$.
+
+2. Take a second sample $Y_1, \ldots , Y_{M}, \ldots Y_{M+H}$ and obtain the sum of squared residuals $RSS_{M+H}$.
+
+3. The test statistic is
+
+$$ \dfrac{RSS_{M+H} - RSS_{M}}{\hat{\sigma}^2_{M}} \sim \chi^2(H)$$
+We can:
+
+a. take $M$ as fixed and change the values of $H$ and thus obtain a forecast deterioration test with a fixed origin and changing forecast horizon, or
+
+b. increase the value of $M$ while keeping $H$ constant. 
+
+I am taking the second approach here. This code is for $H=12$ so that I am applying the test to the forecasts of the following year.
+
+```{r chow3}
+H <- 12
+k1 <- N-H 
+k2 <- H + 1
+den <- sigma12[1:k1]
+num <- coredata(RSSR)[k2:N] - coredata(RSSR)[1:k1]
+chow3 <- num/den
+chow3 <- zoo(chow3, time(RSSR)[1:k1])
+cval <- qchisq(0.99, H)
+chow3 <- chow3/cval
+autoplot(chow3) + xlab("") + ylab("") + 
+  labs(title="Chow Forecast Test H=12" ,
+       subtitle="Normalized by 1% Critical Value")
+```
+
+Tell me when I am rejecting $H_0$
+
+```{r rejectchow3}
+time(RSSR)[chow3>1]
+```
+
+
+# Dummies and Interactions
+
+
+
+
+Is there a break in Sept. 2008?
+
+That is observation
+```{r obs200809}
+which(time(y)==as.Date("2008-09-01"))
+```
+I am creating a dummy
+
+$$ D1_t = 
+\begin{cases}
+1 & t>2008-09-01 \\
+0 & \text{elsewhere}
+\end{cases}$$
+```{r d1}
+d1 <- array(0, dim=length(y))
+d1[105:length(y)] <- 1
+d1<- zoo(d1, time(y)) 
+```
+and estimate a model with interactions
+
+```{r interac1}
+modinter1 <- dynlm(y ~ d1*(L(y, 2:4) + L(x,1) + L(x,3)))
+print(summary(modinter1))
+coeftest(modinter1, vcov=vcovHC)
+```
+
+```{r interac1b}
+modinter1 <- dynlm(y ~ d1*(L(y, 2) + L(y,3) + L(y,4) + L(x,1) + L(x,3) - 1 ) -  d1 
+                   - d1:L(x,3) - d1:L(y,4) - d1:L(y,2))
+print(summary(modinter1))
+coeftest(modinter1, vcov=vcovHC)
+```
+
+Dubious!
+
+Is there a break in January 2004?
+```{r Jan2004}
+t1 <- which(time(y)==time(RSSR)[which(chow2==max(chow2))])
+d1 <- array(0, dim=length(y))
+d1[1:t1] <- 1
+d1 <- zoo(d1, time(y))
+modinter3 <- dynlm(y ~ d1*(0+ L(y,2) + L(y,3) + L(y,4) + L(x,1) + L(x,3)))
+summary(modinter3)
+coeftest(modinter3, vcov=vcovHC)
+```
+```{r modinter3b}
+modinter3 <- dynlm(y ~ d1*(0+ L(y,2) + L(y,3) + L(y,4) + L(x,1) + L(x,3)) 
+                   - d1 - d1:L(x,1) - d1:L(x,3) - d1:L(y,2) - d1:L(y,4))
+summary(modinter3)
+coeftest(modinter3, vcov=vcovHC)
+
+```
+Dubious!
+
+Was it in September 2009?
+
+```{r obs2009-09}
+d2 <- array(0, dim=length(y))
+d2[which(time(y)==as.Date("2009-09-01")):length(N)] <- 1
+d2 <- zoo(d2, time(y))
+modinter2 <- dynlm(y ~ d2*(L(y, 2:4) + L(x,1) + L(x,3)) - 1 - d2)
+print(summary(modinter2))
+coeftest(modinter2, vcov=vcovHC)
+```
+
+```{r modinter2}
+modinter2 <- dynlm(y ~ 0+ L(y,2) + L(y,3) + L(y,4) + L(x,3) +  d2:L(x,1))
+summary(modinter2)
+coeftest(modinter2, vcov=vcovHC)
+```
+
+
+2005-12/2008-09?
+
+```{r inter3}
+t1 <- which(time(y)==as.Date("2005-12-01"))
+t2 <- which(time(y)==as.Date("2008-09-01"))
+d3 <- array(0, dim=length(y))
+d3[t1:t2] <- 1
+d3 <- zoo(d3, time(y))
+modinter3 <- dynlm( y ~d3*(0 + L(y,2) + L(y,3) + L(y,4) + L(x,1) + L(x,3)))
+summary(modinter3)
+coeftest(modinter3, vcov=vcovHC)
+```
+
+```{r inter3b}
+modinter3 <- dynlm( y ~ d3*(0 + L(y,2) + L(y,3) + L(y,4) + L(x,1) + L(x,3))
+                    - d3:L(x,1) - d3:L(y,3) - d3:L(y,4) + d3:L(y,1))
+summary(modinter3)
+coeftest(modinter3, vcov=vcovHC)
+```
+
+Combining some dummies
+
+
+```{r combinter}
+modinter4 <- dynlm( y ~ d3*(0 + L(y,2) + L(y,3) + L(y,4) + L(x,1) + L(x,3))
+                    - d3:L(x,1) - d3:L(y,3) - d3:L(y,4) + d3:L(y,1) + 
+                      L(x, 1)*d2 - d2 - L(x,1) - L(y,2))
+summary(modinter4)
+coeftest(modinter4, vcov=vcovHC)
+```
+
+So that we can compare our models:
+
+```{r modcompare, warning=FALSE, error=FALSE, message=FALSE}
+library(stargazer)
+mod0 <- dynlm(y ~0 + L(y,2) + L(y,3) + L(y,4) + L(x,1) + L(x,3))
+modinter2 <- dynlm(y ~ 0 + L(y,2) + L(y,3) + L(y,4) + L(x,3) + d2:L(x,1))
+modinter3 <- dynlm(y ~0 + d3 +L(y,2) + L(y,3) + L(y,4) + L(x,1) + L(x,3) 
+                   + d3:L(y,1) + d3:L(y,2) + d3:L(x,3) )
+modinter4 <- dynlm(y ~0 + d3 + L(y,3) + L(y,4) + L(x,3) 
+                   + d3:L(y,1) + d3:L(x,3)+ d3:L(y,2) + d2:L(x,1) )
+c0 <- coeftest(mod0, vcov=vcovHC)
+c2 <- coeftest(modinter2, vcov=vcovHC)
+c3 <- coeftest(modinter3, vcov=vcovHC)
+c4 <- coeftest(modinter4, vcov=vcovHC)
+stargazer(c0, c2, c3, c4, type="text")
+```
+
+
+Let's make a graph for the largest models
+```{r}
+mydata <- merge(y, mod0$fitted.values, modinter2$fitted.values,
+                modinter3$fitted.values, modinter4$fitted.values, all=F)
+names(mydata) <- c("Actual", "Model1", "Model2", "Model3", "Model4")
+p <- autoplot(mydata, facets = NULL) + xlab("") + ylab("") + 
+  labs(title="Models with Interactions", subtitle="Fitted Values")
+ggplotly(p)
+```
+
+
+
+# Structural Change (strucchange package and lm)
+
+```{r lm}
+mydata <- cbind(y, lag(y, -2), lag(y, -3), lag(y, -4), lag(x, -1), lag(x, -3))
+names(mydata) <- c("Ylag0", "Ylag2", "Ylag3", "Ylag4", "Xlag1", "Xlag3")
+mydata <- as.xts(mydata)
+mydata <- as.ts(mydata)
+modlm <- lm(Ylag0 ~ Ylag2 + Ylag3 + Ylag4 + Xlag1 + Xlag3 - 1, data=mydata)
+print(summary(modlm))
+```
+
+
+```{r strucchange}
+library(strucchange)
+plot(Fstats(modlm, data = mydata))
+bp.modlm <- breakpoints(Ylag0 ~ Ylag2 + Ylag3 + Ylag4 + Xlag1 + Xlag3 - 1, data=mydata)
+```
+
+
