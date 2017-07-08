@@ -475,7 +475,76 @@ where
 $$
 K = \dfrac{\beta_0 + \beta_1}{1 - \alpha_1}
 $$
-is the log-run response when $\alpha_1 \neq 1$.
+is the log-run response above when $\alpha_1 \neq 1$. The new parameters in
+$$
+f(\mathbf{\theta}) = \mathbf{\psi} = \left( \beta_0, (1 - \alpha_1), K \right)^\prime
+$$
+correspond to the impact
+effect, the feedback effect and the long-run response: no restrictions are imposed in
+this transformation. The term $(y-Kx)_{t-1}$ was called an error-correction mechanism
+(EqCM) in Davidson, Hendry, Srba, and Yeo (1978) since it reflected the deviation from
+the long-run equilibrium outcome, with agents correcting $(1-\alpha_1)$
+of the resulting disequilibrium
+each period. However, such a mechanism does not error correct between
+equilibria, so equilibrium-correction mechanism is more apposite - and has the same
+acronym (but is more often written EqCM). Sargan (1964) provides a real-wage example,
+and Hendry and Anderson (1977) considered some non-unit EqCMs. The special
+case $K=1$ is of interest in econometrics as it corresponds to long-run proportionality
+(or homogeneity in log-linear models), but EqCMs are well defined for $K \neq 1$,
+although
+usually $K$ will then need to be estimated. As Hendry, Pagan, and Sargan (1984)
+note, logistic formulations or more general functions may be necessary to model agents'
+behaviour if they adjust more or less rapidly depending on the extent of disequilibrium
+(see Escribano, 1985).
+
+Engle and Granger (1987) establish an isomorphism between EqCMs and cointegrated
+processes: if $y_t$ and $x_t$ are each $I(1)$ and are cointegrated, then there exists
+an EqCM of the form $(y-Kx)$ and conversely. The former does not entail that the
+EqCM necessarily enters the $y_t$ equation, rather than the $x_t$ equation, and may enter
+both (which would violate weak exogeneity: see Hendry and Mizon (1993) for an example).
+
+In our simple typology, the only EqCM case to impose any restrictions on the
+equation above is $K = 1$ or $\alpha_1 + \beta_0 + \beta_1=1$,
+revealing that all long-run proportionality theories can be
+reproduced in static equilibrium by an appropriate EqCM. Here, this restriction yields:
+$$
+\Delta y_t = \gamma_0 \Delta x_t + \gamma_1 (y - x)_{t-1} + \omega_t.
+$$
+Thus, another interpretation of the growth-rate model is revealed, namely, it
+corresponds to imposing long-run homogeneity $(\alpha_1 + \beta_0 + \beta_1=1)$ and the absence
+of feedback from the level $(1 - \alpha_1 = 0)$, which together entail a
+unit root. Consequently,
+small values of $\gamma_0$ are compatible with long-run proportionality. Since partial
+adjustment corresponds to the special case where $x=y^\star$ (the desired target),
+it imposes $\gamma_0 = -\gamma_1$ to exclude the lagged $x$.
+
+This parametrization has several advantages beyond being more interpretable:
+the regressors $\Delta x_t$ and $(y-x)_{t-1}$ will not usually be highly correlated, being
+a current change and a lagged disequilibrium; and proportionality is easily tested by
+adding $x_{t-1}$ as a (relatively non-collinear) regressor (however, such a test must allow
+for the possibility that $\{ x_t \}$ may be I (1)).
+Further, a less strong lag shape is being imposed.
+
+When the EqCM is the correct specification, the partial adjustment model may suffer
+from severe biases, and possibly residual autocorrelation, since it omits
+$x_{t-1}$ which
+is highly correlated with $x_t$.
+
+Finally, EqCMs can be confused with COMFAC models despite their very different
+implications for lag responses. This arises because COMFAC is an EqCM with the
+restriction that long-run and short-run responses are equal, as can be seen by rewriting
+the COMFAC model in the form:
+$$
+y_t = \beta_0 x_t + \rho(y_{t-1} - \beta_0 x_{t-1}) + \varepsilon_t,
+$$
+or
+$$
+\Delta y_t = \beta_0 \Delta x_t + (\rho - 1) (y - \beta_0 x)_{t-1} + \varepsilon_t.
+$$
+Thus, the degree of mis-specification of this equation depends on the extent on which
+$(\alpha_1 - 1)(K - \beta_0 \neq 0)$, which could be small even if $K = 1$, and,
+for example, $\beta_0 = 4$.
+
 
 ## Dead-start models
 
