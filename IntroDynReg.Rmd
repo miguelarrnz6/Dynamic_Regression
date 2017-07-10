@@ -73,7 +73,7 @@ d_0 + d_1 L + d_2 L^2 & = (d_0 + d_1 + d_2) - d_1(1-L) - d_2 (1-L)(1+L) \\
 \end{align*}
 where
 $$ d^\star (L) = (d_1 + d_2) + d_2 L$$.
-In general, we can alaways write
+In general, we can always write
 $$ d(L) = d(1) - d^\star (L) \Delta$$
 which will prove impoortant below.
 
@@ -155,7 +155,8 @@ E[y_t] = K_0 + K_1 E[x_t].
 $$
 
 If $c(1) \neq 0$ and $b(1) \neq 0$ when $y_t$ and $x_t$ are both $I(1)$, yet
-$\{ \}y_t - K_1 x_t -  K_0$ is $I(0)$, then $y_t$ and $x_t$ are said to be **cointegrated**.
+$\{ y_t - K_1 x_t -  K_0 \}$ is $I(0)$, then $y_t$ and $x_t$ are said to
+be **cointegrated**.
 Thus, cointegration is the
 property that linear combinations of variables also remove the unit roots.
 The long-run solution above remains valid in the cointegrated case.
@@ -220,7 +221,7 @@ the typology highlights their distinct characteristics, strengths and weaknesses
 To clarify the approach, we consider the nine cases in turn, deriving each via restrictions
 on the parameter vector:
 $$
-\mathbf{\theta}^\prime = (\alpha_1, \beta_0, \beta_1)
+\boldsymbol{\theta}^\prime = (\alpha_1, \beta_0, \beta_1)
 $$
 of (1), noting that an intercept and an error variance can be included without altering
 the implications in all models, and are omitted for simplicity of exposition. Four of
@@ -228,7 +229,7 @@ the cases impose two restrictions on $\theta$ and five impose one, and these wil
 to respectively as one and two parameter models since $\sigma^2$ is common to all stochastic
 models. Table 1 lists the outcomes.
 
-|     Type of Model      |         $\mathbf{\theta}^\prime$         |              Restrictions on (1)              |                    |
+|     Type of Model      |       $\boldsymbol{\theta}^\prime$        |              Restrictions on (1)              |                    |
 | ---------------------- | ---------------------------------------- | --------------------------------------------- | ------------------ |
 | static regression      | $(0, \beta_0, 0)$                        | $\alpha_1 = \beta_1 = 0$                      | no dynamics        |
 | autoregressive process | $(\alpha_1, 0, 0)$                       | $\beta_0 = \beta_1 = 0$                       | np covariates      |
@@ -285,7 +286,7 @@ y_t = b_0 x_t + u_t
 $$
 (with $b_0$ and $x_t$ vectors in general) have played a large role in many macro-econometric
 systems as erstwhile 'structural' equations (i.e., embodying the fundamental parameters
-of the behaviour of economic agents). In practice, futg has usually been highly
+of the behaviour of economic agents). In practice, $u_t$ has usually been highly
 autocorrelated (reminiscent of nonsense correlations - see Yule, 1926), so that conventional
 inference about b0 is invalid (see, for example, Granger and Newbold, 1974, and
 Phillips, 1986). However, static equations reappeared as part of a two-stage strategy
@@ -296,7 +297,7 @@ Then, $b_0$ would
 be a direct estimator of $K$ in (12.9). Even so, the success of such an estimator in finite
 samples has been questioned (see Banerjee, Dolado, Hendry, and Smith, 1986), and is
 dependent on the mean lag between $y$ and $x$, noting that a static equation imposes that
-mean lag at zero. Alternatively, you may considfer the strategy of removing the
+mean lag at zero. Alternatively, you may consider the strategy of removing the
 autocorrelation in $\{u_t\}$ by fitting an autoregressive process.
 
 ## Univariate autoregressive processes
@@ -316,7 +317,7 @@ than unit roots). In economics, the interdependence of economic decisions
 must be derived, and hence are not autonomous processes - where an
 equation for $y_t$ is autonomous if changes in the process generating $x_t$ do not alter it.
 Here, the autoregression is obtained by eliminating, or marginalizing with respect to,
-xt. For example, let $x_t = x_{t-1} + \nu_t$ where $\nu_t \sim iid N(0, \sigma^2_t)$
+$x_t$. For example, let $x_t = x_{t-1} + \nu_t$ where $\nu_t \sim iid N(0, \sigma^2_t)$
 when in fact $\alpha_1 = 1$ and $\beta_1 = - \beta_0$, then
 $y_t = y_{t-1} + \varepsilon_t + \beta_0 \nu_t$ has a non-constant variance
 $\sigma^2_\varepsilon + \beta_0^2 \sigma^2_t$.
@@ -429,7 +430,8 @@ cancellation. IN the case of equation (1), we can write the equation as
 $$
 (1 - \alpha_1 L) y_t = \beta_0 (1 + \dfrac{\beta_1}{\beta_0} L) x_t + \varepsilon_t.
 $$
-Thus, if and only if $\alpha_1 = -\beta_1/\beta_0$ or $\beta_1 + \alpha_1 \beta_0$,
+Thus, if and only if $\alpha_1 = -\beta_1/\beta_0$ or
+$\beta_1 + \alpha_1 \beta_0 = 0$,
 then on dividing both sides by $(1- \alpha_1 L)$, the equation can be rewritten as
 $$
 y_t = \beta_0 x_t + \dfrac{\varepsilon_t}{1 - \alpha_1 L},
@@ -463,7 +465,7 @@ with the advice in the title of the paper by Mizon (1995).
 
 ## Equlibrium-correction mechanisms
 
-The issue of appropriate reparametrizations of $\mathbf{\theta}$ has arisen on
+The issue of appropriate reparametrizations of $\boldsymbol{\theta}$ has arisen on
 several occasions above, and many alternatives are conceivable.
 One natural choice follows from rearranging the ADL(1,1) model (1) as:
 \begin{align*}
@@ -606,13 +608,13 @@ The interesting element in this dynamic model is that it describes the dynamic
 effects of a change in $x$ upon current and future values of $y$.
 Taking partial derivatives, we can derive that the immediate response is given by
 $$
-\partial{y_t}{x_t} = \beta_0.
+\partial{y_t}{\partial x_t} = \beta_0.
 $$
 Sometimes this is referred to as the **impact multiplier**.
 An increase in $x$  with one unit has an immediate impact on $y$ of $\beta_0$  units.
 The effect after one period is
 $$
-\partial{y_{t+1}}{x_t} = \alpha_1 \partial{y_t}{x_t} + \beta_1 = alpha_1 \beta_0 + \beta_1
+\partial{y_{t+1}}{\partial x_t} = \alpha_1 \partial{y_t}{\partial x_t} + \beta_1 = alpha_1 \beta_0 + \beta_1
 $$
 You can obtain this from
 $$
@@ -624,7 +626,7 @@ y_{t+2} = \alpha_1 y_{t+1} + \beta_0 x_{t+2} + \beta_1 x_{t+1} + \varepsilon_{t+
 $$
 and thus
 $$
-\partial{y_{t+2}}{x_t} = \alpha_1 \partial{y_{t+1}}{x_t} = \alpha_1 (alpha_1 \beta_0 + \beta_1)
+\partial{y_{t+2}}{\partial x_t} = \alpha_1 \partial{y_{t+1}}{\partial x_t} = \alpha_1 (\alpha_1 \beta_0 + \beta_1)
 $$
 and so on. This shows that, after the first period, the effect is decreasing
 if $|alpha_1 < 1|$. Imposing this so-called stability condition allows us to
@@ -632,8 +634,8 @@ determine the long-run effect of a unit change in $x$.
 It is given by the **long-run multiplier** (or equilibrium multiplier)
 $$
 \begin{split}
- \beta_0 & + (alpha_1 \beta_0 + \beta_1) + \alpha_1 (alpha_1 \beta_0 + \beta_1) + \ldots \\
-  & = \beta_0 + (alpha_1 \beta_0 + \beta_1) (1 + \alpha_1 + \alpha_1^2 + \ldots) \\
+ \beta_0 & + (\alpha_1 \beta_0 + \beta_1) + \alpha_1 (alpha_1 \beta_0 + \beta_1) + \ldots \\
+  & = \beta_0 + (\alpha_1 \beta_0 + \beta_1) (1 + \alpha_1 + \alpha_1^2 + \ldots) \\
     & = \dfrac{\beta_0 + \beta_1}{1-\alpha_1}
 \end{split}
 $$
@@ -725,7 +727,7 @@ $$
 $$
 It may also be calculated as
 $$
-\mu = \dfrac{W^\prime(L)}{W(L)}_{|L=1}.
+\mu = \left. \dfrac{W^\prime(L)}{W(L)} \right|_{L=1}.
 $$
 
 Mean and median lags are useful when we wish to know how many periods it takes for
@@ -752,10 +754,10 @@ standard errors, corrections have been developed.
 The notation for the linear model is as follows
 \begin{equation}
 y_t = \sum_{i=1}^k \beta_i x_{i,t} + \varepsilon_t =
-  \mathbf{\beta}^\prime  \mathbf{x}_t +
+  \boldsymbol{\beta}^\prime  \mathbf{x}_t +
   \varepsilon_t \qquad \varepsilon_t \sim iid N(0, \sigma^2_\varepsilon),
 \end{equation}
-where $\mathbf{\beta}$ is $k \times 1$, and
+where $\boldsymbol{\beta}$ is $k \times 1$, and
 $E[\mathbf{x}_t \varepsilon_t] = \mathbf{0}$.
 
 Now we take
@@ -843,7 +845,7 @@ This a very generic test, lacking power when we include too many parameters in t
 
 In this case we are more specific about the functional form of the variance:
 
-$$ E(\epsilon_t^2) = f(z_t)$$
+$$ E(\epsilon_t^2 | \cdot) = f(z_t)$$
 where $z$ are the variables in the original regression.
 In the BP test the auxiliary regression is
 
@@ -1058,10 +1060,8 @@ Sources of forecasting errors:
 
 Let's make the predictions for the following 12 months. Notice that:
 
-1. We are making a dynamic forecast of $Y$ as in Eviews.
-2. We are taking the actual values of $X$, and thus assuming it is really
-3. exogenous. We should in fact build an univariate model for $X$ and
-4. obtain forecasts from it.
+1.  We are making a dynamic forecast of $Y$ as in Eviews.
+2.  We are taking the actual values of $X$, and thus assuming it is really exogenous. We should in fact build an univariate model for $X$ and obtain forecasts from it.
 
 ## Forecast deterioration test
 
