@@ -608,13 +608,15 @@ The interesting element in this dynamic model is that it describes the dynamic
 effects of a change in $x$ upon current and future values of $y$.
 Taking partial derivatives, we can derive that the immediate response is given by
 $$
-\partial{y_t}{\partial x_t} = \beta_0.
+\dfrac{\partial y_t}{\partial x_t} = \beta_0.
 $$
 Sometimes this is referred to as the **impact multiplier**.
 An increase in $x$  with one unit has an immediate impact on $y$ of $\beta_0$  units.
 The effect after one period is
 $$
-\partial{y_{t+1}}{\partial x_t} = \alpha_1 \partial{y_t}{\partial x_t} + \beta_1 = alpha_1 \beta_0 + \beta_1
+\dfrac{\partial y_{t+1}}{\partial x_t} =
+\alpha_1 \dfrac{\partial y_t}{\partial x_t} + \beta_1 =
+\alpha_1 \beta_0 + \beta_1
 $$
 You can obtain this from
 $$
@@ -626,15 +628,17 @@ y_{t+2} = \alpha_1 y_{t+1} + \beta_0 x_{t+2} + \beta_1 x_{t+1} + \varepsilon_{t+
 $$
 and thus
 $$
-\partial{y_{t+2}}{\partial x_t} = \alpha_1 \partial{y_{t+1}}{\partial x_t} = \alpha_1 (\alpha_1 \beta_0 + \beta_1)
+\dfrac{\partial y_{t+2}}{\partial x_t} =
+\alpha_1 \dfrac{\partial y_{t+1}}{\partial x_t} =
+\alpha_1 (\alpha_1 \beta_0 + \beta_1)
 $$
 and so on. This shows that, after the first period, the effect is decreasing
-if $|alpha_1 < 1|$. Imposing this so-called stability condition allows us to
+if $|\alpha_1 < 1|$. Imposing this so-called stability condition allows us to
 determine the long-run effect of a unit change in $x$.
 It is given by the **long-run multiplier** (or equilibrium multiplier)
 $$
 \begin{split}
- \beta_0 & + (\alpha_1 \beta_0 + \beta_1) + \alpha_1 (alpha_1 \beta_0 + \beta_1) + \ldots \\
+ \beta_0 & + (\alpha_1 \beta_0 + \beta_1) + \alpha_1 (\alpha_1 \beta_0 + \beta_1) + \ldots \\
   & = \beta_0 + (\alpha_1 \beta_0 + \beta_1) (1 + \alpha_1 + \alpha_1^2 + \ldots) \\
     & = \dfrac{\beta_0 + \beta_1}{1-\alpha_1}
 \end{split}
@@ -643,17 +647,35 @@ which can be expressed as
 $$
 \dfrac{\beta(1)}{\alpha(1)}.
 $$
-The long-run equilibrium relation between $y$ and $x$ can be seen to be
-(imposing $E[y_t] = E[y_{t-1}] = \mu_y$, $E[x_t] = E[x_{t-1}] = \mu_x$)
-$$
-\mu_y = \dfrac{\delta}{1 - \alpha_1} + \dfrac{\beta_0 + \beta_1}{1 - \alpha_1} \mu_x
-$$
-which presents an alternative derivation of the long-run multiplier.
 
-In some cases, long run equilibria and the long run multiplier are
-of greater interest than short run effects. Policymakers, for example, debate the optimal
-defense spending needed to generate a sustained peaceful equilibrium or the long run effects
-of deficit spending on economic growth.
+Two time series are in equilibrium when they are in a state in which there is
+no tendency to change. The "long-run equilibrium" defines the state to which
+the series converge over time. It is given by the unconditional expectations
+or the expected value of $Y_t$ in equilibrium.
+Let $y^\ast = E(Y_t)$ and $x^\ast = E(X_t)$ for all $t$. If the two processes
+move together without error, in the long run they converge to
+$$
+y^\star = \alpha_0 + \alpha_1 y^\star + \beta_0 x^\star + \beta_1 x^\star
+$$
+Solving for $y^\star$ in terms of $x^\star$ yields:
+$$
+y^\star= \dfrac{\alpha_0}{1 - \alpha_1} +
+\dfrac{\beta_0 + \beta_1}{1 - \alpha_1} x^\star
+= k_0 + k_1 x^\star,
+$$
+where
+$$
+k_0 = \dfrac{\alpha_0}{1 - \alpha_1}, \qquad
+k_1 = \dfrac{\beta_0 + \beta_1}{1 - \alpha_1}
+$$
+and $k_1$ gives the long run multiplier (LRM) of $X_t$, with respect to $Y_t$.
+We can think of the LRM as the total effect $X_t$, has on $Y_t$ distributed
+over future time periods. In some cases, long-run equilibria and the LRM are of
+greater interest than short run effects. Policymakers, for example, debate
+the optimal defense spending needed to generate a sustained peaceful
+equilibrium or the long-run effects of deficit spending on economic growth.
+
+
 
 ## Forgotten Dynamic Quantities: Mean and Median Lag Lengths
 
